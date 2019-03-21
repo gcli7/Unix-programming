@@ -62,7 +62,10 @@ void traverse_pid(const char *path, std::map<std::string, Stat> &table) {
 	closedir(dir);
 }
 
-void traverse_proc(std::map<std::string, Stat> &table) {
+/*
+ * Find all of the pid directories in /proc/.
+ */
+void find_pid_dir(std::map<std::string, Stat> &table) {
 	DIR *dir;
 	struct dirent *f;
 	char pid_path[LEN] = {0};
@@ -76,6 +79,7 @@ void traverse_proc(std::map<std::string, Stat> &table) {
 			continue;
 
 		cat_path(pid_path, proc_path, f->d_name);
+		//printf("pid_path = %s\n", pid_path);
 		traverse_pid(pid_path, table);
 	}
 	closedir(dir);
@@ -147,7 +151,7 @@ int main(int argc, char **argv) {
 	//printf("========== udp6 ==========\n");
 	get_stat(udp6, udp6_file_path, "udp6", inode_table);
 
-	traverse_proc(inode_table);
+	find_pid_dir(inode_table);
 
 	return 0;
 }
