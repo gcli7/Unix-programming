@@ -1,5 +1,8 @@
 all:
-	g++ -o lab1-demo main.cpp
+	g++ -o demo lab1.cpp
+
+run:
+	sudo ./demo
 
 clean:
-	rm lab1-demo
+	rm demo
