@@ -10,27 +10,36 @@ extern const char *proc_path;
 extern const char *tcp_file_path;
 extern const char *udp_file_path;
 
+void show(std::map<std::string, Stat> &table) {
+	printf("table size = %ld\n", table.size());
+	for (std::map<std::string, Stat>::iterator mi = table.begin(); mi != table.end(); mi++)
+        printf("inode = %s, pid = %s\n", mi->first.c_str(), mi->second.pid);
+}
+
+/*
+ * Split the pid path and store the pid into Stat structure.
+ */
 void get_pid(const char *path, Stat &stat) {
 	int l = strlen(path);
 	int index = l;
 	for (--index; path[index] != '/'; index--);
 	index++;
+	memset(stat.pid, 0, N);
 	for (int i = 0; index < l; index++, i++)
 		stat.pid[i] = path[index];
-	//printf("pid = %s\n", stat.pid);
 }
 
-void traverse_pid(const char *path, std::map<std::string, Stat> &table) {
+/*
+ * Traverse all of the fd directories to find the inodes of some descriptors
+ * are the same as the inodes in the /proc/net/tcp, tcp6, udp, udp6.
+ */
+void traverse_fd(const char *pid_path, std::map<std::string, Stat> &table) {
     DIR *dir;
     struct dirent *f;
     char fd_path[LEN] = {0};
-	char descriptor_path[LEN] = {0};
-	char inode[N] = {0};
-	char buf[LEN];
-	int l;
-	int indexI, indexJ;
 
-	cat_path(fd_path, path, "fd");
+	cat_path(fd_path, pid_path, "fd");
+	//printf("fd_path = %s\n", fd_path);
     dir = opendir(fd_path);
     if (dir == NULL)
         return;
@@ -39,25 +48,35 @@ void traverse_pid(const char *path, std::map<std::string, Stat> &table) {
 		if (is_dot(f->d_name))
 			continue;
 
-		cat_path(descriptor_path, fd_path, f->d_name);
-		memset(buf, 0, LEN);
-		if (readlink(descriptor_path, buf, LEN) == -1)
-			printf("Unable to read link.\n");
+		char descriptor_path[LEN] = {0};
+		char inode[N] = {0};
+		char buf[LEN] = {0};
+		int l, indexI, indexJ;
 
-		l = strlen(buf);
-		if (buf[0] == '/' || buf[l-1] != ']' || buf[l-2] < '0' || buf[l-2] > '9' )
+		/*
+		 * Find the location of the descriptors link.
+		 */
+		cat_path(descriptor_path, fd_path, f->d_name);
+		if (readlink(descriptor_path, buf, LEN) == -1)
 			continue;
+
+		/*
+		 * Only reserve the descriptors which contain the information about inode.
+		 */
+		l = strlen(buf);
+		if (buf[0] == '/' || buf[l-1] != ']' || buf[l-2] < '0' || buf[l-2] > '9')
+			continue;
+		//printf("\tbuf = %s\n", buf);
 
 		indexI = 0;
 		indexJ = 0;
 		while (buf[indexI++] != '[');
 		while (buf[indexI] != ']')
 			inode[indexJ++] = buf[indexI++];
+		//printf("\tinode = %s\n", inode);
 
-		if (table.find(inode) != table.end()) {
-			get_pid(path, table[inode]);
-			//printf("path = %s, inode = %s\n", path, inode);
-		}
+		if (table.find(inode) != table.end())
+			get_pid(pid_path, table[inode]);
     }
 	closedir(dir);
 }
@@ -80,7 +99,7 @@ void find_pid_dir(std::map<std::string, Stat> &table) {
 
 		cat_path(pid_path, proc_path, f->d_name);
 		//printf("pid_path = %s\n", pid_path);
-		traverse_pid(pid_path, table);
+		traverse_fd(pid_path, table);
 	}
 	closedir(dir);
 }
@@ -90,7 +109,7 @@ void find_pid_dir(std::map<std::string, Stat> &table) {
  */
 void get_stat(std::vector<Stat> &base, const char *path, const char *protocol, std::map<std::string, Stat> &table) {
 	FILE *file_ptr = fopen(path, "r");
-	char buf[N];
+	char buf[N] = {0};
 	int limit;
 
     if (file_ptr == NULL) {
@@ -117,14 +136,14 @@ void get_stat(std::vector<Stat> &base, const char *path, const char *protocol, s
 	 */
     while (fscanf(file_ptr, "%s", buf) != -1) {
 		Stat tmp;
-	    char inode[N];
+	    char inode[N] = {0};
 
 		fscanf(file_ptr, "%s", tmp.local_address);
 		fscanf(file_ptr, "%s", tmp.foreign_address);
 		for (int i = 1; i < 7; i++)
         	fscanf(file_ptr, "%s", buf);
 		fscanf(file_ptr, "%s", inode);
-		table.emplace(inode, tmp);
+		table[inode] = tmp;
 		for (int i = 1; i < limit; i++)
         	fscanf(file_ptr, "%s", buf);
 		
@@ -152,6 +171,7 @@ int main(int argc, char **argv) {
 	get_stat(udp6, udp6_file_path, "udp6", inode_table);
 
 	find_pid_dir(inode_table);
+	show(inode_table);
 
 	return 0;
 }
