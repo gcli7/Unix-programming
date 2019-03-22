@@ -35,11 +35,13 @@ bool is_not_pid(const char *name) {
 
 void cat_path(char *ret, const char *a, const char *b) {
 	int l = strlen(a);
-	memset(ret, 0, LEN);
-	strcat(ret, a);
-	if (a[l-1] == '/' && b[0] == '/')
-		ret[l-1] = '\0';
-	else if (a[l-1] != '/' && b[0] != '/')
+	strcpy(ret, a);
+	if (a[l-1] == '/' && b[0] == '/') {
+		ret[l-1] = 0;
+	}
+	else if (a[l-1] != '/' && b[0] != '/') {
 		ret[l] = '/';
+		ret[l+1] = 0;
+	}
 	strcat(ret, b);
 }
