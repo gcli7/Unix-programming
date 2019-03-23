@@ -21,18 +21,18 @@ typedef struct stat {
 } Stat;
 
 bool is_dot(const char *name) {
-    if (!strcmp(name, ".") || !strcmp(name, ".."))
-        return true;
-    return false;
+	if (!strcmp(name, ".") || !strcmp(name, ".."))
+		return true;
+	return false;
 }
 
 bool is_not_pid(const char *name) {
-    int l = strlen(name);
-    for (int i = 0; i < l; i++)
-        if (name[i] < '0' || name[i] > '9')
-            return true;
+	int l = strlen(name);
+	for (int i = 0; i < l; i++)
+		if (name[i] < '0' || name[i] > '9')
+			return true;
 
-    return false;
+	return false;
 }
 
 void cat_path(char *ret, const char *a, const char *b) {
