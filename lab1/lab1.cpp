@@ -6,12 +6,130 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <inttypes.h>
+#include <getopt.h>
 #include "handle-string.hpp"
 
 extern const char *proc_path;
 extern const char *tcp_file_path;
 extern const char *udp_file_path;
 std::vector<Stat> table;
+
+/*
+ * According to the argc and argv, decide what should be displayed.
+ */
+void display_result(int &argc, char **argv) {
+	bool tcp_flag = false;
+	bool udp_flag = false;
+	bool filter_flag = false;
+	bool display_flag = true;
+	char filter_string[LEN] = {0};
+	const char *opt_string = "tu";
+	struct option opts[] = {
+		{"tcp", 0, NULL, 't'},
+		{"udp", 0, NULL, 'u'},
+	};
+	char c = 0;
+
+	while((c = getopt_long(argc, argv, opt_string, opts, NULL)) != -1) {
+		switch(c) {
+			case 't':
+				tcp_flag = true;
+				break;
+			case 'u':
+				udp_flag = true;
+				break;
+			case '?':
+				exit(-1);
+		}
+	}
+	if (!(tcp_flag | udp_flag)) {
+		tcp_flag = true;
+		udp_flag = true;
+	}
+
+	if (argv[argc-1][0] != '-') {
+		filter_flag = true;
+		strcpy(filter_string, argv[argc-1]);
+	}
+
+	/*
+	 * Set the range to display.
+	 */
+	std::vector<Stat>::iterator start, end;
+	int redundant = 0;
+
+	if (tcp_flag && udp_flag) {
+		start = table.begin();
+		end = table.end();
+		printf("List of TCP connections:\n");
+	}
+	else if (tcp_flag) {
+		start = table.begin();
+		for (end = table.begin(); end != table.end() && end->protocol[0] == 't'; end++);
+		printf("List of TCP connections:\n");
+	}
+	else {
+		end = table.end();
+		for (start = table.begin(); start != table.end() && start->protocol[0] == 't'; start++);
+		printf("List of UDP connections:\n");
+	}
+
+	printf("Proto Local Address           Foreign Address         PID/Program name and arguments\n");
+	for ( ; start != end; start++) {
+		if (filter_flag && strstr(start->program, filter_string) == NULL)
+			continue;
+
+		if (display_flag && tcp_flag && start->protocol[0] == 'u') {
+			printf("\nList of UDP connections:\n");
+			display_flag = false;
+		}
+
+		/*
+		 * Protocol
+		 */
+		printf("%-6s", start->protocol);
+		/*
+         * Local address and port
+         */
+		printf("%s:", start->local_address);
+		if (start->local_port)
+			printf("%d", start->local_port);
+		else
+			printf("*");
+		redundant = 23 - strlen(start->local_address) - numlen(start->local_port);
+		for (int i = 0; i < redundant; i++)
+			printf(" ");
+		/*
+         * Foreign address and port
+         */
+		printf("%s:", start->foreign_address);
+		if (start->foreign_port)
+			printf("%d", start->foreign_port);
+		else
+			printf("*");
+		redundant = 23 - strlen(start->foreign_address) - numlen(start->foreign_port);
+		for (int i = 0; i < redundant; i++)
+			printf(" ");
+		/*
+         * Pid
+         */
+		if (start->pid == 0) {
+			printf("-\n");
+			continue;
+		}
+		else
+			printf("%d/", start->pid);
+		/*
+		 * Program and arguments
+		 */
+		 /*	if (strlen(start->program) > 13)
+			 for (int i = 0; i < 13; i++)
+				 printf("%c", start->program[i]);
+		else*/
+			printf("%s", start->program);
+		printf("\n");
+	}
+}
 
 /*
  * Find the pid and program, then store them in stat.
@@ -37,10 +155,8 @@ void store_pid_and_program(const char *descriptor_path, Stat &stat) {
 	cat_path(cmdline_path, cmdline_path, "cmdline");
 
 	cmdline_file_ptr = fopen(cmdline_path, "r");
-	if (cmdline_file_ptr == NULL) {
-		fprintf(stderr, "Unable to open the cmdline: %s\n", cmdline_path);
-		exit(-1);
-	}
+	if (cmdline_file_ptr == NULL)
+		return;
 
 	fgets(stat.program, LEN, cmdline_file_ptr);
 	if (stat.program[0] == '/')
@@ -57,10 +173,8 @@ void find_inode(const char *descriptor_path) {
 	char link_inode[N] = {0};
 	const char *inode_start_ptr, *inode_end_ptr;
 
-	if (readlink(descriptor_path, link, LEN) == -1) {
-		fprintf(stderr, "Unable to read the link: %s\n", descriptor_path);
-        exit(-1);
-	}
+	if (readlink(descriptor_path, link, LEN) == -1)
+        return;
 
 	if (strstr(link, "socket") == NULL)
 		return;
@@ -90,10 +204,8 @@ void traverse_descriptors(const char *pid_path, std::vector<Stat> &table) {
 
 	cat_path(fd_path, pid_path, "fd");
 	dir = opendir(fd_path);
-	if (dir == NULL) {
-		fprintf(stderr, "Unable to open the folder: %s\n", fd_path);
-		exit(-1);
-	}
+	if (dir == NULL)
+		return;
 
 	while ((files = readdir(dir)) != NULL) {
 		if (is_dot(files->d_name))
@@ -197,7 +309,7 @@ void get_stat(const char *path, const char *protocol) {
 
 	file_ptr = fopen(path, "r");
 	if (file_ptr == NULL) {
-		fprintf(stderr, "Unable to open the net file: %s\n", path);
+		fprintf(stderr, "Unable to open the file: %s\n", path);
 		exit(-1);
 	}
 
@@ -238,7 +350,7 @@ void get_stat(const char *path, const char *protocol) {
 	fclose(file_ptr);
 }
 
-void run() {
+void run(int &argc, char **argv) {
 	//printf("========== tcp ==========\n");
 	get_stat(tcp_file_path, "tcp");
 	//printf("========== tcp6 ==========\n");
@@ -250,14 +362,11 @@ void run() {
 
 	convert_ip_address();
 	traverse_pid_folders();
-
-	printf("%-6s%-14s%-24s%s\n", "Proto", "Local Address", "Foreign Address", "PID/Program name and arguments");
-	for (auto &stat : table)
-		printf("%-6s%-20s:%-6d%-20s:%-6d%d\n", stat.protocol, stat.local_address, stat.local_port, stat.foreign_address, stat.foreign_port, stat.pid);
+	display_result(argc, argv);
 }
 
 int main(int argc, char **argv) {
-	run();
+	run(argc, argv);
 
 	return 0;
 }

@@ -47,3 +47,15 @@ void cat_path(char *ret, const char *a, const char *b) {
 	}
 	strcat(ret, b);
 }
+
+int numlen(int n) {
+	if (!n)
+		return 1;
+
+	int counter = 0;
+	while (n) {
+		n /= 10;
+		counter++;
+	}
+	return counter;
+}
