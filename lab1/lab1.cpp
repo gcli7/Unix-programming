@@ -49,7 +49,7 @@ void display_result(int &argc, char **argv) {
 		udp_flag = true;
 	}
 
-	if (argv[argc-1][0] != '-') {
+	if (argv[argc-1][0] != '-' && strcmp(argv[argc-1], "./demo")) {
 		filter_flag = true;
 		strcpy(filter_string, argv[argc-1]);
 		regcomp(&regex, filter_string, 0);
@@ -77,20 +77,21 @@ void display_result(int &argc, char **argv) {
 		printf("List of UDP connections:\n");
 	}
 
-	printf("Proto Local Address			  Foreign Address		  PID/Program name and arguments\n");
+	printf("Proto   Local Address           Foreign Address         PID/Program name and arguments\n");
 	for ( ; start != end; start++) {
-		if (filter_flag && regexec(&regex, start->program, 0, NULL, 0) == REG_NOMATCH/*strstr(start->program, filter_string) == NULL*/)
+		if (filter_flag && regexec(&regex, start->program, 0, NULL, 0) == REG_NOMATCH)
 			continue;
 
 		if (display_flag && tcp_flag && start->protocol[0] == 'u') {
 			printf("\nList of UDP connections:\n");
+			printf("Proto   Local Address           Foreign Address         PID/Program name and arguments\n");
 			display_flag = false;
 		}
 
 		/*
 		 * Protocol
 		 */
-		printf("%-6s", start->protocol);
+		printf("%-8s", start->protocol);
 		/*
 		 * Local address and port
 		 */
@@ -125,11 +126,7 @@ void display_result(int &argc, char **argv) {
 		/*
 		 * Program and arguments
 		 */
-		 /*	if (strlen(start->program) > 13)
-			 for (int i = 0; i < 13; i++)
-				 printf("%c", start->program[i]);
-		else*/
-			printf("%s", start->program);
+		printf("%s", start->program);
 		printf("\n");
 	}
 }
@@ -262,40 +259,16 @@ void convert_ip_address() {
 			inet_ntop(AF_INET, &(ipv4.s_addr), vi->foreign_address, INET_ADDRSTRLEN);
 		}
 		else {
-			sscanf(vi->local_address + 6, "%2" SCNu8, &(ipv6.s6_addr[0]));
-			sscanf(vi->local_address + 4, "%2" SCNu8, &(ipv6.s6_addr[1]));
-			sscanf(vi->local_address + 2, "%2" SCNu8, &(ipv6.s6_addr[2]));
-			sscanf(vi->local_address + 0, "%2" SCNu8, &(ipv6.s6_addr[3]));
-			sscanf(vi->local_address + 14, "%2" SCNu8, &(ipv6.s6_addr[4]));
-			sscanf(vi->local_address + 12, "%2" SCNu8, &(ipv6.s6_addr[5]));
-			sscanf(vi->local_address + 10, "%2" SCNu8, &(ipv6.s6_addr[6]));
-			sscanf(vi->local_address + 8, "%2" SCNu8, &(ipv6.s6_addr[7]));
-			sscanf(vi->local_address + 22, "%2" SCNu8, &(ipv6.s6_addr[8]));
-			sscanf(vi->local_address + 20, "%2" SCNu8, &(ipv6.s6_addr[9]));
-			sscanf(vi->local_address + 18, "%2" SCNu8, &(ipv6.s6_addr[10]));
-			sscanf(vi->local_address + 16, "%2" SCNu8, &(ipv6.s6_addr[11]));
-			sscanf(vi->local_address + 30, "%2" SCNu8, &(ipv6.s6_addr[12]));
-			sscanf(vi->local_address + 28, "%2" SCNu8, &(ipv6.s6_addr[13]));
-			sscanf(vi->local_address + 26, "%2" SCNu8, &(ipv6.s6_addr[14]));
-			sscanf(vi->local_address + 24, "%2" SCNu8, &(ipv6.s6_addr[15]));
-			inet_ntop(AF_INET6, &(ipv6.s6_addr), vi->local_address, INET6_ADDRSTRLEN);
-			sscanf(vi->foreign_address + 6, "%2" SCNu8, &(ipv6.s6_addr[0]));
-			sscanf(vi->foreign_address + 4, "%2" SCNu8, &(ipv6.s6_addr[1]));
-			sscanf(vi->foreign_address + 2, "%2" SCNu8, &(ipv6.s6_addr[2]));
-			sscanf(vi->foreign_address + 0, "%2" SCNu8, &(ipv6.s6_addr[3]));
-			sscanf(vi->foreign_address + 14, "%2" SCNu8, &(ipv6.s6_addr[4]));
-			sscanf(vi->foreign_address + 12, "%2" SCNu8, &(ipv6.s6_addr[5]));
-			sscanf(vi->foreign_address + 10, "%2" SCNu8, &(ipv6.s6_addr[6]));
-			sscanf(vi->foreign_address + 8, "%2" SCNu8, &(ipv6.s6_addr[7]));
-			sscanf(vi->foreign_address + 22, "%2" SCNu8, &(ipv6.s6_addr[8]));
-			sscanf(vi->foreign_address + 20, "%2" SCNu8, &(ipv6.s6_addr[9]));
-			sscanf(vi->foreign_address + 18, "%2" SCNu8, &(ipv6.s6_addr[10]));
-			sscanf(vi->foreign_address + 16, "%2" SCNu8, &(ipv6.s6_addr[11]));
-			sscanf(vi->foreign_address + 30, "%2" SCNu8, &(ipv6.s6_addr[12]));
-			sscanf(vi->foreign_address + 28, "%2" SCNu8, &(ipv6.s6_addr[13]));
-			sscanf(vi->foreign_address + 26, "%2" SCNu8, &(ipv6.s6_addr[14]));
-			sscanf(vi->foreign_address + 24, "%2" SCNu8, &(ipv6.s6_addr[15]));
-			inet_ntop(AF_INET6, &(ipv6.s6_addr), vi->foreign_address, INET6_ADDRSTRLEN);
+			sscanf(vi->local_address, "%8x", &(ipv6.__in6_u.__u6_addr32[0]));
+			sscanf(vi->local_address + 8, "%8x", &(ipv6.__in6_u.__u6_addr32[1]));
+			sscanf(vi->local_address + 16, "%8x", &(ipv6.__in6_u.__u6_addr32[2]));
+			sscanf(vi->local_address + 24, "%8x", &(ipv6.__in6_u.__u6_addr32[3]));
+			inet_ntop(AF_INET6, &(ipv6.__in6_u), vi->local_address, INET6_ADDRSTRLEN);
+			sscanf(vi->foreign_address, "%8x", &(ipv6.__in6_u.__u6_addr32[0]));
+			sscanf(vi->foreign_address + 8, "%8x", &(ipv6.__in6_u.__u6_addr32[1]));
+			sscanf(vi->foreign_address + 16, "%8x", &(ipv6.__in6_u.__u6_addr32[2]));
+			sscanf(vi->foreign_address + 24, "%8x", &(ipv6.__in6_u.__u6_addr32[3]));
+			inet_ntop(AF_INET6, &(ipv6.__in6_u), vi->foreign_address, INET6_ADDRSTRLEN);
 		}
 	}
 }
@@ -354,13 +327,9 @@ void get_stat(const char *path, const char *protocol) {
 }
 
 void run(int &argc, char **argv) {
-	//printf("========== tcp ==========\n");
 	get_stat(tcp_file_path, "tcp");
-	//printf("========== tcp6 ==========\n");
 	get_stat(tcp6_file_path, "tcp6");
-	//printf("========== udp ==========\n");
 	get_stat(udp_file_path, "udp");
-	//printf("========== udp6 ==========\n");
 	get_stat(udp6_file_path, "udp6");
 
 	convert_ip_address();
