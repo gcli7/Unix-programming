@@ -3,6 +3,9 @@
 #include <vector>
 #include <dirent.h>
 #include <unistd.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <inttypes.h>
 #include "handle-string.hpp"
 
 extern const char *proc_path;
@@ -16,21 +19,21 @@ std::vector<Stat> table;
 void store_pid_and_program(const char *descriptor_path, Stat &stat) {
 	const char *pid_start_ptr, *pid_end_ptr;
 	char cmdline_path[LEN] = {0};
+	char pid[N];
 	FILE *cmdline_file_ptr;
 
 	/*
      * Get the pid.
      */
-	//printf("descriptor_path = %s\n", descriptor_path);
 	pid_start_ptr = strchr(descriptor_path + 1, '/') + 1;
 	pid_end_ptr = strchr(pid_start_ptr, '/');
-	strncpy(stat.pid, pid_start_ptr, pid_end_ptr - pid_start_ptr);
-	//printf("\tpid = %s\n", stat.pid);
+	strncpy(pid, pid_start_ptr, pid_end_ptr - pid_start_ptr);
+	stat.pid = atoi(pid);
 
 	/*
      * Get the program and arguments.
      */
-	cat_path(cmdline_path, proc_path, stat.pid);
+	cat_path(cmdline_path, proc_path, pid);
 	cat_path(cmdline_path, cmdline_path, "cmdline");
 
 	cmdline_file_ptr = fopen(cmdline_path, "r");
@@ -42,7 +45,6 @@ void store_pid_and_program(const char *descriptor_path, Stat &stat) {
 	fgets(stat.program, LEN, cmdline_file_ptr);
 	if (stat.program[0] == '/')
 		strcpy(stat.program, strrchr(stat.program, '/') + 1);
-	//printf("\t\tcmdline_path = %s, cmdline = %s\n", cmdline_path, stat.program);
 
 	fclose(cmdline_file_ptr);
 }
@@ -69,10 +71,9 @@ void find_inode(const char *descriptor_path) {
 	inode_start_ptr = strchr(link, '[') + 1;
 	inode_end_ptr = strchr(link, ']');
 	strncpy(link_inode, inode_start_ptr, inode_end_ptr - inode_start_ptr);
-	//printf("link_inode = %s\n", link_inode);
 
 	for (auto &stat : table)
-		if (!strcmp(link_inode, stat.inode)) {
+		if (atoi(link_inode) == stat.inode) {
 			store_pid_and_program(descriptor_path, stat);
 			break;
 		}
@@ -88,7 +89,6 @@ void traverse_descriptors(const char *pid_path, std::vector<Stat> &table) {
 	char fd_path[LEN] = {0};
 
 	cat_path(fd_path, pid_path, "fd");
-	//printf("\tfd_path = %s\n", fd_path);
 	dir = opendir(fd_path);
 	if (dir == NULL) {
 		fprintf(stderr, "Unable to open the folder: %s\n", fd_path);
@@ -102,7 +102,6 @@ void traverse_descriptors(const char *pid_path, std::vector<Stat> &table) {
 		char descriptor_path[LEN] = {0};
 
 		cat_path(descriptor_path, fd_path, files->d_name);
-		//printf("\tdescriptor_path = %s\n", descriptor_path);
 		find_inode(descriptor_path);
 	}
 	closedir(dir);
@@ -128,10 +127,62 @@ void traverse_pid_folders() {
 			continue;
 
 		cat_path(pid_path, proc_path, files->d_name);
-		//printf("pid_path = %s, files->d_name = %s\n", pid_path, files->d_name);
 		traverse_descriptors(pid_path, table);
 	}
 	closedir(dir);
+}
+
+/*
+ * Convert the ip address to a readable format.
+ */
+void convert_ip_address() {
+	struct in_addr ipv4;
+	struct in6_addr ipv6;
+
+	for (std::vector<Stat>::iterator vi = table.begin(); vi != table.end(); vi++) {
+		if (strlen(vi->protocol) == 3) {
+			sscanf(vi->local_address, "%x", &(ipv4.s_addr));
+			inet_ntop(AF_INET, &(ipv4.s_addr), vi->local_address, INET_ADDRSTRLEN);
+			sscanf(vi->foreign_address, "%x", &(ipv4.s_addr));
+			inet_ntop(AF_INET, &(ipv4.s_addr), vi->foreign_address, INET_ADDRSTRLEN);
+		}
+		else {
+			sscanf(vi->local_address + 6, "%2" SCNu8, &(ipv6.s6_addr[0]));
+			sscanf(vi->local_address + 4, "%2" SCNu8, &(ipv6.s6_addr[1]));
+			sscanf(vi->local_address + 2, "%2" SCNu8, &(ipv6.s6_addr[2]));
+			sscanf(vi->local_address + 0, "%2" SCNu8, &(ipv6.s6_addr[3]));
+			sscanf(vi->local_address + 14, "%2" SCNu8, &(ipv6.s6_addr[4]));
+			sscanf(vi->local_address + 12, "%2" SCNu8, &(ipv6.s6_addr[5]));
+			sscanf(vi->local_address + 10, "%2" SCNu8, &(ipv6.s6_addr[6]));
+			sscanf(vi->local_address + 8, "%2" SCNu8, &(ipv6.s6_addr[7]));
+			sscanf(vi->local_address + 22, "%2" SCNu8, &(ipv6.s6_addr[8]));
+			sscanf(vi->local_address + 20, "%2" SCNu8, &(ipv6.s6_addr[9]));
+			sscanf(vi->local_address + 18, "%2" SCNu8, &(ipv6.s6_addr[10]));
+			sscanf(vi->local_address + 16, "%2" SCNu8, &(ipv6.s6_addr[11]));
+			sscanf(vi->local_address + 30, "%2" SCNu8, &(ipv6.s6_addr[12]));
+			sscanf(vi->local_address + 28, "%2" SCNu8, &(ipv6.s6_addr[13]));
+			sscanf(vi->local_address + 26, "%2" SCNu8, &(ipv6.s6_addr[14]));
+			sscanf(vi->local_address + 24, "%2" SCNu8, &(ipv6.s6_addr[15]));
+            inet_ntop(AF_INET6, &(ipv6.s6_addr), vi->local_address, INET6_ADDRSTRLEN);
+			sscanf(vi->foreign_address + 6, "%2" SCNu8, &(ipv6.s6_addr[0]));
+            sscanf(vi->foreign_address + 4, "%2" SCNu8, &(ipv6.s6_addr[1]));
+            sscanf(vi->foreign_address + 2, "%2" SCNu8, &(ipv6.s6_addr[2]));
+            sscanf(vi->foreign_address + 0, "%2" SCNu8, &(ipv6.s6_addr[3]));
+            sscanf(vi->foreign_address + 14, "%2" SCNu8, &(ipv6.s6_addr[4]));
+            sscanf(vi->foreign_address + 12, "%2" SCNu8, &(ipv6.s6_addr[5]));
+            sscanf(vi->foreign_address + 10, "%2" SCNu8, &(ipv6.s6_addr[6]));
+            sscanf(vi->foreign_address + 8, "%2" SCNu8, &(ipv6.s6_addr[7]));
+            sscanf(vi->foreign_address + 22, "%2" SCNu8, &(ipv6.s6_addr[8]));
+            sscanf(vi->foreign_address + 20, "%2" SCNu8, &(ipv6.s6_addr[9]));
+            sscanf(vi->foreign_address + 18, "%2" SCNu8, &(ipv6.s6_addr[10]));
+            sscanf(vi->foreign_address + 16, "%2" SCNu8, &(ipv6.s6_addr[11]));
+            sscanf(vi->foreign_address + 30, "%2" SCNu8, &(ipv6.s6_addr[12]));
+            sscanf(vi->foreign_address + 28, "%2" SCNu8, &(ipv6.s6_addr[13]));
+            sscanf(vi->foreign_address + 26, "%2" SCNu8, &(ipv6.s6_addr[14]));
+            sscanf(vi->foreign_address + 24, "%2" SCNu8, &(ipv6.s6_addr[15]));
+            inet_ntop(AF_INET6, &(ipv6.s6_addr), vi->foreign_address, INET6_ADDRSTRLEN);
+		}
+	}
 }
 
 /*
@@ -141,6 +192,7 @@ void get_stat(const char *path, const char *protocol) {
 	FILE *file_ptr;
 	Stat stat = {0};
 	char buf[LEN] = {0};
+	char *str_ptr;
 	int redundant = 0;
 
 	file_ptr = fopen(path, "r");
@@ -169,18 +221,19 @@ void get_stat(const char *path, const char *protocol) {
 	strcpy(stat.protocol, protocol);
 	while (fscanf(file_ptr, "%s", buf) != -1) {
 		fscanf(file_ptr, "%s", stat.local_address);
+		str_ptr = strchr(stat.local_address, ':') + 1;
+		sscanf(str_ptr, "%x", &stat.local_port);
+		*(str_ptr - 1) = 0;
 		fscanf(file_ptr, "%s", stat.foreign_address);
+		str_ptr = strchr(stat.foreign_address, ':') + 1;
+        sscanf(str_ptr, "%x", &stat.foreign_port);
+        *(str_ptr - 1) = 0;
 		for (int i = 1; i < 7; i++)
 			fscanf(file_ptr, "%s", buf);
-		fscanf(file_ptr, "%s", stat.inode);
+		fscanf(file_ptr, "%d", &stat.inode);
 		for (int i = 1; i < redundant; i++)
 			fscanf(file_ptr, "%s", buf);
 		table.emplace_back(stat);
-
-		//printf("protocol = %s, ", stat.protocol);
-		//printf("inode = %s, ", stat.inode);
-		//printf("local = %s, ", stat.local_address);
-		//printf("foreign = %s\n", stat.foreign_address);
 	}
 	fclose(file_ptr);
 }
@@ -195,11 +248,12 @@ void run() {
 	//printf("========== udp6 ==========\n");
 	get_stat(udp6_file_path, "udp6");
 
+	convert_ip_address();
 	traverse_pid_folders();
-	
+
 	printf("%-6s%-14s%-24s%s\n", "Proto", "Local Address", "Foreign Address", "PID/Program name and arguments");
 	for (auto &stat : table)
-		printf("%-6s%-24s%-24s%s/%s\n", stat.protocol, stat.local_address, stat.foreign_address, stat.pid, stat.program);
+		printf("%-6s%-20s:%-6d%-20s:%-6d%d\n", stat.protocol, stat.local_address, stat.local_port, stat.foreign_address, stat.foreign_port, stat.pid);
 }
 
 int main(int argc, char **argv) {

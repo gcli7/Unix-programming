@@ -10,11 +10,13 @@ const char *udp_file_path = "/proc/net/udp";
 const char *udp6_file_path = "/proc/net/udp6";
 
 typedef struct stat {
-	char inode[N];
+	int inode;
 	char protocol[N];
 	char local_address[N];
+	int local_port;
 	char foreign_address[N];
-	char pid[N];
+	int foreign_port;
+	int pid;
 	char program[LEN];
 } Stat;
 
