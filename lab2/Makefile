@@ -7,9 +7,10 @@ demo.so: Lab2.c Lab2.h
 	gcc -Wall -fPIC -shared -o demo.so Lab2.c -ldl
 
 run:
+	rm -f a.txt
 	LD_LIBRARY_PATH=/home/cheng/Code/Unix-programming/lab2 LD_PRELOAD=demo.so ./test
-	echo $$$$
-	echo $$$$
+#	echo $$$$
+#	echo $$$$
 
 clean:
 	rm -f *.o

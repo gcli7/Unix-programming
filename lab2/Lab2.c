@@ -24,7 +24,7 @@ struct dirent * readdir(DIR *dir) {
 int creat(const char *path, mode_t mode) {
 	LOAD_FUNC(real_creat, "creat");
 	int ret = real_creat(path, mode);
-	fprintf(stderr, "creat(%s, %d) = %d\n", path, mode, ret);
+	fprintf(stderr, "creat(\"%s\", %d) = %d\n", path, mode, ret);
 	return ret;
 }
 
@@ -68,14 +68,14 @@ int close(int fd) {
 int __lxstat(int __var, const char *path, struct stat *buf) {
 	LOAD_FUNC(real_lstat, "__lxstat");
 	int ret = real_lstat(3, path, buf);
-	fprintf(stderr, "lstat(%s, %p) = %d\n", path, (void *)buf, ret);
+	fprintf(stderr, "lstat(\"%s\", %p) = %d\n", path, (void *)buf, ret);
 	return ret;
 }
 
 int __xstat(int __var, const char *path, struct stat *buf) {
 	LOAD_FUNC(real_stat, "__xstat");
 	int ret = real_stat(3, path, buf);
-	fprintf(stderr, "stat(%s, %p) = %d\n", path, (void *)buf, ret);
+	fprintf(stderr, "stat(\"%s\", %p) = %d\n", path, (void *)buf, ret);
 	return ret;
 }
 
@@ -89,7 +89,7 @@ ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
 FILE *fopen(const char *pathname, const char *mode) {
 	LOAD_FUNC(real_fopen, "fopen");
 	FILE *ret = real_fopen(pathname, mode);
-	fprintf(stderr, "fopen(%s, %s) = %p\n", pathname, mode, (void *)ret);
+	fprintf(stderr, "fopen(\"%s\", \"%s\") = %p\n", pathname, mode, (void *)ret);
 	return ret;
 }
 
@@ -117,6 +117,43 @@ size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
 int fgetc(FILE *stream) {
 	LOAD_FUNC(real_fgetc, "fgetc");
 	int ret = real_fgetc(stream);
-	fprintf(stderr, "fwrite(%p) = %d\n", (void *)stream, ret);
+	fprintf(stderr, "fgetc(%p) = %d\n", (void *)stream, ret);
+	return ret;
+}
+
+/*
+int fscanf(FILE *stream, const char *format, ...) {
+	LOAD_FUNC(real_fscanf, "fscanf");
+	int ret = real_fscanf(stream, format, ...);
+	fprintf(stderr, "fscanf(%p, %s, ...) = %d\n", (void *)stream, format, ret);
+	return ret;
+}
+
+int fprintf(FILE *stream, const char *format, ...) {
+	LOAD_FUNC(real_fprintf, "fprintf");
+	int ret = real_fprintf(stream, format, ...);
+	fprintf(stderr, "fgetc(%p, %s, ...) = %d\n", (void *)stream, format, ret);
+	return ret;
+}
+*/
+
+int chdir(const char *path) {
+	LOAD_FUNC(real_chdir, "chdir");
+	int ret = real_chdir(path);
+	fprintf(stderr, "chdir(\"%s\") = %d\n", path, ret);
+	return ret;
+}
+
+int chown(const char *pathname, uid_t owner, gid_t group) {
+	LOAD_FUNC(real_chown, "chown");
+	int ret = real_chown(pathname, owner, group);
+	fprintf(stderr, "chown(\"%s\", %d, %d) = %d\n", pathname, owner, group, ret);
+	return ret;
+}
+
+int chmod(const char *pathname, mode_t mode) {
+	LOAD_FUNC(real_chmod, "chmod");
+	int ret = real_chmod(pathname, mode);
+	fprintf(stderr, "chmod(\"%s\", %d) = %d\n", pathname, mode, ret);
 	return ret;
 }

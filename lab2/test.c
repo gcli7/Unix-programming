@@ -19,7 +19,7 @@ int main() {
 	readdir(dir);
 	closedir(dir);
 
-	fd = creat("a.txt", O_CREAT);
+	fd = creat("a.txt", O_RDWR | S_IRUSR | S_IWUSR);
 	write(fd, buf, sizeof(buf));
 	close(fd);
 	
@@ -27,18 +27,28 @@ int main() {
 	read(fd, buf, sizeof(buf));
 	close(dup(fd));
 	close(dup2(fd, 10));
+	strcpy(buf, "Test pwrite!");
+	pwrite(fd, buf, sizeof(buf), 50);
+	close(fd);
 	
 	lstat("a.txt", &s);
 	stat("a.txt", &s);
+	//perror("stat");
 
-	strcpy(buf, "Test pwrite!");
-	pwrite(fd, buf, sizeof(buf), 50);
-
-	f = fopen("b.txt", "wb+");
+	f = fopen("b.txt", "w+");
 	strcpy(buf, "Test fwrite!");
 	fwrite(buf, sizeof(char), 12, f);
+	fclose(f);
+
+	f = fopen("b.txt", "r");
+	fgetc(f);
 	fread(buf, sizeof(char), 5, f);
 	fclose(f);
+
+	chdir("testcases");
+	chdir("..");
+	chown("b.txt", -1, -1);
+	chmod("b.txt", S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	return 0;
 }
