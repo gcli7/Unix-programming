@@ -1,9 +1,9 @@
-all: test demo.so
+all: test fsmon.so
 
 test: test.o
 	gcc -Wall -o test test.c
 
-demo.so: Lab2.c Lab2.h
+fsmon.so: Lab2.c Lab2.h
 	gcc -Wall -fPIC -shared -o demo.so Lab2.c -ldl
 
 runLOG:
@@ -14,5 +14,7 @@ run:
 
 clean:
 	rm -f *.o
-	rm -f demo.so
+	rm -f *.so
 	rm -f test
+	rm -f *.txt
+	rm -f *.log

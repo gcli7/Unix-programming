@@ -23,7 +23,7 @@ int main() {
 	
 	fd = open("z.txt", O_CREAT | O_TRUNC | O_RDWR, S_IRUSR | S_IWUSR);
 	close(fd);
-	fd = open("a.txt", O_CREAT | O_RDWR, S_IRWXU);
+	fd = open("a.txt", O_RDWR);
 	read(fd, buf, sizeof(buf));
 	close(dup(fd));
 	close(dup2(fd, 10));

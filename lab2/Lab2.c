@@ -3,9 +3,8 @@
 __attribute__((constructor)) void set_output_fd() {
 	const char *s = getenv("MONITOR_OUTPUT");
 	if (s) {
-		//LOAD_FUNC(real_open, "open");
-		//output_fd = real_open(s, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-		output_fd = open(s, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+		LOAD_FUNC(real_open, "open");
+		output_fd = real_open(s, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 		LOAD_FUNC(real_dup2, "dup2");
 		real_dup2(output_fd, STDERR_FILENO);
 		LOAD_FUNC(real_close, "close");
@@ -45,7 +44,21 @@ int creat(const char *path, mode_t mode) {
 	return ret;
 }
 
-// open
+int open(const char *pathname, int flags, ...) {
+	va_list args;
+	va_start(args, flags);
+	mode_t m = va_arg(args, mode_t);
+	va_end(args);
+
+	if (flags & (O_CREAT | O_TMPFILE))
+		fprintf(stderr, "open(\"%s\", %d, %d) = ", pathname, flags, m);
+	else
+		fprintf(stderr, "open(\"%s\", %d) = ", pathname, flags);
+	LOAD_FUNC(real_open, "open");
+	int ret = real_open(pathname, flags, m);
+	fprintf(stderr, "%d\n", ret);
+	return ret;
+}
 
 ssize_t read(int fd, void *buf, size_t count) {
 	fprintf(stderr, "read(%d, %p, %ld) = ", fd, buf, count);

@@ -1,9 +1,12 @@
 #ifndef LAB2_H
 #define LAB2_H
 
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <dirent.h>
@@ -30,7 +33,7 @@ static int (*real_closedir)(DIR *) = NULL;
 static DIR * (*real_opendir)(const char *) = NULL;
 static struct dirent * (*real_readdir)(DIR *) = NULL;
 static int (*real_creat)(const char *, mode_t) = NULL;
-// open
+static int (*real_open)(const char *, int, mode_t) = NULL;
 static ssize_t (*real_read)(int, void *, size_t) = NULL;
 static ssize_t (*real_write)(int, const void *, size_t) = NULL;
 static int (*real_dup)(int) = NULL;
