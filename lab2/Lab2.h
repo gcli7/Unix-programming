@@ -5,7 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dlfcn.h>
+#include <fcntl.h>
 #include <dirent.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -21,6 +23,8 @@
 									exit(-1); \
 								} \
 							} while (0)
+
+int output_fd;
 
 static int (*real_closedir)(DIR *) = NULL;
 static DIR * (*real_opendir)(const char *) = NULL;
@@ -49,5 +53,9 @@ static int (*real_remove)(const char *) = NULL;
 static int (*real_rename)(const char *, const char *) = NULL;
 static int (*real_link)(const char *, const char *) = NULL;
 static int (*real_unlink)(const char *) = NULL;
+static ssize_t (*real_readlink)(const char *, char *, size_t) = NULL;
+static int (*real_symlink)(const char *, const char *) = NULL;
+static int (*real_mkdir)(const char *, mode_t) = NULL;
+static int (*real_rmdir)(const char *) = NULL;
 
 #endif

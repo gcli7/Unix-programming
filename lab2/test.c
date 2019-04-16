@@ -13,8 +13,6 @@ int main() {
 	char buf[256] = {"Hello World!"};
 	FILE *f;
 
-	printf("\n\n");
-
 	dir = opendir("testcases");
 	readdir(dir);
 	closedir(dir);
@@ -23,6 +21,8 @@ int main() {
 	write(fd, buf, strlen(buf));
 	close(fd);
 	
+	fd = open("z.txt", O_CREAT | O_TRUNC | O_RDWR, S_IRUSR | S_IWUSR);
+	close(fd);
 	fd = open("a.txt", O_CREAT | O_RDWR, S_IRWXU);
 	read(fd, buf, sizeof(buf));
 	close(dup(fd));
@@ -54,8 +54,14 @@ int main() {
 	remove("test.txt");
 	rename("a.txt", "c.txt");
 
-	link("b.txt", "t");
-	unlink("t");
+	link("b.txt", "hard_link");
+	unlink("hard_link");
+	symlink("c.txt", "soft_link");
+	readlink("t", buf, sizeof(buf));
+	unlink("soft_link");
+
+	mkdir("mk_dir", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	rmdir("mk_dir");
 
 	return 0;
 }

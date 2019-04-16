@@ -1,5 +1,18 @@
 #include "Lab2.h"
 
+__attribute__((constructor)) void set_output_fd() {
+	const char *s = getenv("MONITOR_OUTPUT");
+	if (s) {
+		//LOAD_FUNC(real_open, "open");
+		//output_fd = real_open(s, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+		output_fd = open(s, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+		LOAD_FUNC(real_dup2, "dup2");
+		real_dup2(output_fd, STDERR_FILENO);
+		LOAD_FUNC(real_close, "close");
+		real_close(output_fd);
+	}
+}
+
 int closedir(DIR *dir) {
 	fprintf(stderr, "closedir(%p) = ", (void *)dir);
 	LOAD_FUNC(real_closedir, "closedir");
@@ -208,6 +221,38 @@ int unlink(const char *pathname) {
 	fprintf(stderr, "unlink(\"%s\") = ", pathname);
 	LOAD_FUNC(real_unlink, "unlink");
 	int ret = real_unlink(pathname);
+	fprintf(stderr, "%d\n", ret);
+	return ret;
+}
+
+ssize_t readlink(const char *pathname, char *buf, size_t bufsiz) {
+	fprintf(stderr, "readlink(\"%s\", \"%s\", %ld) = ", pathname, buf, bufsiz);
+	LOAD_FUNC(real_readlink, "readlink");
+	ssize_t ret = real_readlink(pathname, buf, bufsiz);
+	fprintf(stderr, "%ld\n", ret);
+	return ret;
+}
+
+int symlink(const char *target, const char *linkpath) {
+	fprintf(stderr, "symlink(\"%s\", \"%s\") = ", target, linkpath);
+	LOAD_FUNC(real_symlink, "symlink");
+	int ret = real_symlink(target, linkpath);
+	fprintf(stderr, "%d\n", ret);
+	return ret;
+}
+
+int mkdir(const char *pathname, mode_t mode) {
+	fprintf(stderr, "mkdir(\"%s\", %d) = ", pathname, mode);
+	LOAD_FUNC(real_mkdir, "mkdir");
+	int ret = real_mkdir(pathname, mode);
+	fprintf(stderr, "%d\n", ret);
+	return ret;
+}
+
+int rmdir(const char *pathname) {
+	fprintf(stderr, "rmdir(\"%s\") = ", pathname);
+	LOAD_FUNC(real_rmdir, "rmdir");
+	int ret = real_rmdir(pathname);
 	fprintf(stderr, "%d\n", ret);
 	return ret;
 }

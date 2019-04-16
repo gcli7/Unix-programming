@@ -3,5 +3,6 @@ unix_prog/
 
 *.o
 *.so
+*.log
 *.txt
 *.swp
