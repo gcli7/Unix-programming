@@ -39,5 +39,6 @@ static FILE * (*real_fopen)(const char *, const char *) = NULL;
 static int (*real_fclose)(FILE *) = NULL;
 static size_t (*real_fread)(void *, size_t, size_t, FILE *) = NULL;
 static size_t (*real_fwrite)(const void *, size_t, size_t, FILE *) = NULL;
+static int (*real_fgetc)(FILE *) = NULL;
 
 #endif

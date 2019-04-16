@@ -1,5 +1,7 @@
 inclass-20160530.tar.gz
 unix_prog/
 
+*.o
+*.so
 *.txt
 *.swp

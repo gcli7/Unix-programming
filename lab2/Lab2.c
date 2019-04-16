@@ -102,14 +102,21 @@ int fclose(FILE *stream) {
 
 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
 	LOAD_FUNC(real_fread, "fread");
-	int ret = real_fread(ptr, size, nmemb, stream);
-	fprintf(stderr, "fread(%p, %ld, %ld, %p) = %d\n", ptr, size, nmemb, (void *)stream, ret);
+	size_t ret = real_fread(ptr, size, nmemb, stream);
+	fprintf(stderr, "fread(%p, %ld, %ld, %p) = %ld\n", ptr, size, nmemb, (void *)stream, ret);
 	return ret;
 }
 
 size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
 	LOAD_FUNC(real_fwrite, "fwrite");
-	int ret = real_fwrite(ptr, size, nmemb, stream);
-	fprintf(stderr, "fwrite(%p, %ld, %ld, %p) = %d\n", ptr, size, nmemb, (void *)stream, ret);
+	size_t ret = real_fwrite(ptr, size, nmemb, stream);
+	fprintf(stderr, "fwrite(%p, %ld, %ld, %p) = %ld\n", ptr, size, nmemb, (void *)stream, ret);
+	return ret;
+}
+
+int fgetc(FILE *stream) {
+	LOAD_FUNC(real_fgetc, "fgetc");
+	int ret = real_fgetc(stream);
+	fprintf(stderr, "fwrite(%p) = %d\n", (void *)stream, ret);
 	return ret;
 }
