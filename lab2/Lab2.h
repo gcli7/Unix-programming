@@ -6,6 +6,8 @@
 #include <string.h>
 #include <dlfcn.h>
 #include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #define LOAD_FUNC(f, lib_f) do { \
 								void *handle = dlopen("libc.so.6", RTLD_LAZY); \
@@ -30,5 +32,7 @@ static ssize_t (*real_write)(int fd, const void *buf, size_t count) = NULL;
 static int (*real_dup)(int) = NULL;
 static int (*real_dup2)(int, int) = NULL;
 static int (*real_close)(int) = NULL;
+static int (*real_lstat)(const char *, struct stat *) = NULL;
+static int (*real_stat)(const char *, struct stat *) = NULL;
 
 #endif

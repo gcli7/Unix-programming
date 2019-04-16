@@ -3,10 +3,13 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 int main() {
 	DIR *dir;
 	int fd;
+	struct stat s;
 	char buf[] = {"Hello World!"};
 
 	dir = opendir("testcases");
@@ -38,6 +41,12 @@ int main() {
 
 	close(dup2(fd, 10));
 	printf("\t===== close and dup2 =====\n");
+
+	lstat("testcases", &s);
+	printf("\t===== lstat =====\n");
+
+	stat("testcases", &s);
+	printf("\t===== stat =====\n");
 
 	return 0;
 }

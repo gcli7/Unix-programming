@@ -64,3 +64,17 @@ int close(int fd) {
 	fprintf(stderr, "close(%d) = %d\n", fd, ret);
 	return ret;
 }
+
+int lstat(const char *path, struct stat *buf) {
+	LOAD_FUNC(real_lstat, "lstat");
+	int ret = real_lstat(path, buf);
+	fprintf(stderr, "lstat(%p, %p) = %d\n", (void *)path, (void *)buf, ret);
+	return ret;
+}
+
+int stat(const char *path, struct stat *buf) {
+	LOAD_FUNC(real_stat, "stat");
+	int ret = real_stat(path, buf);
+	fprintf(stderr, "stat(%p, %p) = %d\n", (void *)path, (void *)buf, ret);
+	return ret;
+}
