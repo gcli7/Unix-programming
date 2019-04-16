@@ -28,7 +28,7 @@ static struct dirent * (*real_readdir)(DIR *) = NULL;
 static int (*real_creat)(const char *, mode_t) = NULL;
 // open
 static ssize_t (*real_read)(int, void *, size_t) = NULL;
-static ssize_t (*real_write)(int fd, const void *buf, size_t count) = NULL;
+static ssize_t (*real_write)(int, const void *, size_t) = NULL;
 static int (*real_dup)(int) = NULL;
 static int (*real_dup2)(int, int) = NULL;
 static int (*real_close)(int) = NULL;
@@ -44,6 +44,10 @@ static int (*real_fgetc)(FILE *) = NULL;
 //static int (*real_fprintf)(FILE *, const char *, ...) = NULL;
 static int (*real_chdir)(const char *);
 static int (*real_chown)(const char *, uid_t, gid_t) = NULL;
-static int (*real_chmod)(const char *pathname, mode_t mode) = NULL;
+static int (*real_chmod)(const char *, mode_t) = NULL;
+static int (*real_remove)(const char *) = NULL;
+static int (*real_rename)(const char *, const char *) = NULL;
+static int (*real_link)(const char *, const char *) = NULL;
+static int (*real_unlink)(const char *) = NULL;
 
 #endif

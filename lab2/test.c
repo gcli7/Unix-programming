@@ -10,7 +10,7 @@ int main() {
 	DIR *dir;
 	int fd;
 	struct stat s;
-	char buf[] = {"Hello World!"};
+	char buf[256] = {"Hello World!"};
 	FILE *f;
 
 	printf("\n\n");
@@ -20,7 +20,7 @@ int main() {
 	closedir(dir);
 
 	fd = creat("a.txt", O_RDWR | S_IRUSR | S_IWUSR);
-	write(fd, buf, sizeof(buf));
+	write(fd, buf, strlen(buf));
 	close(fd);
 	
 	fd = open("a.txt", O_CREAT | O_RDWR, S_IRWXU);
@@ -28,7 +28,7 @@ int main() {
 	close(dup(fd));
 	close(dup2(fd, 10));
 	strcpy(buf, "Test pwrite!");
-	pwrite(fd, buf, sizeof(buf), 50);
+	pwrite(fd, buf, strlen(buf), 6);
 	close(fd);
 	
 	lstat("a.txt", &s);
@@ -49,6 +49,13 @@ int main() {
 	chdir("..");
 	chown("b.txt", -1, -1);
 	chmod("b.txt", S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+	fclose(fopen("test.txt", "wb+"));
+	remove("test.txt");
+	rename("a.txt", "c.txt");
+
+	link("b.txt", "t");
+	unlink("t");
 
 	return 0;
 }
