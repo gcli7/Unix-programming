@@ -11,42 +11,45 @@ int main() {
 	int fd;
 	struct stat s;
 	char buf[] = {"Hello World!"};
+	FILE *f;
+
+	printf("\n\n");
 
 	dir = opendir("testcases");
-	printf("\t===== opendir =====\n");
 
 	readdir(dir);
-	printf("\t===== readdir =====\n");
 
 	closedir(dir);
-	printf("\t===== close =====\n");
 
 	fd = creat("a.txt", O_CREAT);
-	printf("\t===== creat =====\n");
 
 	write(fd, buf, sizeof(buf));
-	printf("\t===== write =====\n");
 
 	close(fd);
-	printf("\t===== close =====\n");
 	
 	fd = open("a.txt", O_RDONLY);
-	printf("\t===== fopen =====\n");
 
 	read(fd, buf, sizeof(buf));
-	printf("\t===== read =====\n");
 
 	close(dup(fd));
-	printf("\t===== close and dup =====\n");
 
 	close(dup2(fd, 10));
-	printf("\t===== close and dup2 =====\n");
 
-	lstat("testcases", &s);
-	printf("\t===== lstat =====\n");
+	lstat("a.txt", &s);
 
-	stat("testcases", &s);
-	printf("\t===== stat =====\n");
+	stat("a.txt", &s);
+
+	strcpy(buf, "Test pwrite!");
+	pwrite(fd, buf, sizeof(buf), 50);
+
+	f = fopen("a.txt", "r");
+
+	fread(buf, sizeof(char), 5, f);
+
+	strcpy(buf, "Test fwrite!");
+	fwrite(buf, sizeof(char), 12, f);
+
+	fclose(f);
 
 	return 0;
 }

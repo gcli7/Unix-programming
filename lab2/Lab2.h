@@ -32,7 +32,12 @@ static ssize_t (*real_write)(int fd, const void *buf, size_t count) = NULL;
 static int (*real_dup)(int) = NULL;
 static int (*real_dup2)(int, int) = NULL;
 static int (*real_close)(int) = NULL;
-static int (*real_lstat)(const char *, struct stat *) = NULL;
-static int (*real_stat)(const char *, struct stat *) = NULL;
+static int (*real_lstat)(int, const char *, struct stat *) = NULL;
+static int (*real_stat)(int, const char *, struct stat *) = NULL;
+static ssize_t (*real_pwrite)(int, const void *, size_t, off_t) = NULL;
+static FILE * (*real_fopen)(const char *, const char *) = NULL;
+static int (*real_fclose)(FILE *) = NULL;
+static size_t (*real_fread)(void *, size_t, size_t, FILE *) = NULL;
+static size_t (*real_fwrite)(const void *, size_t, size_t, FILE *) = NULL;
 
 #endif
