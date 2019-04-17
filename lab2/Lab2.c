@@ -2,7 +2,6 @@
 
 __attribute__((constructor)) void set_output_fd() {
 	const char *s = getenv("MONITOR_OUTPUT");
-	LOAD_FUNC(output_func, "fprintf");
 	if (s) {
 		LOAD_FUNC(real_open, "open");
 		LOAD_FUNC(real_dup2, "dup2");
@@ -13,7 +12,14 @@ __attribute__((constructor)) void set_output_fd() {
 		real_dup2(output_fd, STDERR_FILENO);
 		real_close(output_fd);
 	}
-	output_func(stderr, "%s\n", "test");
+}
+
+int output_func(FILE *stream, const char *format, ...) {
+	va_list arg_list;
+	va_start(arg_list, format);
+	int ret = vfprintf(stream, format, arg_list);
+	va_end(arg_list);
+	return ret;
 }
 
 void read_fd_link(int fd) {
@@ -223,9 +229,9 @@ char * fgets(char *s, int size, FILE *stream) {
 
 int __isoc99_fscanf(FILE *stream, const char *format, ...) {
 	va_list arg_list;
-    va_start(arg_list, format);
+	va_start(arg_list, format);
 	int ret = vfscanf(stream, format, arg_list);
-    va_end(arg_list);
+	va_end(arg_list);
 	output_func(stderr, "# fscanf(\"%s\", %s, ...) = %d\n",
 				get_fd_name(fileno(stream)), format, ret);
 	return ret;
@@ -233,9 +239,9 @@ int __isoc99_fscanf(FILE *stream, const char *format, ...) {
 
 int fprintf(FILE *stream, const char *format, ...) {
 	va_list arg_list;
-    va_start(arg_list, format);
-    int ret = vfprintf(stream, format, arg_list);
-    va_end(arg_list);
+	va_start(arg_list, format);
+	int ret = vfprintf(stream, format, arg_list);
+	va_end(arg_list);
 	output_func(stderr, "# fprintf(\"%s\", %s, ...) = %d\n",
 				get_fd_name(fileno(stream)), format, ret);
 	return ret;
@@ -279,7 +285,7 @@ int rename(const char *oldpath, const char *newpath) {
 int link(const char *oldpath, const char *newpath) {
 	LOAD_FUNC(real_link, "link");
 	int ret = real_link(oldpath, newpath);
-	output_func(stderr, "link(\"%s\", \"%s\") = %d\n", oldpath, newpath, ret);
+	output_func(stderr, "# link(\"%s\", \"%s\") = %d\n", oldpath, newpath, ret);
 	return ret;
 }
 

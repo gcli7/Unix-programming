@@ -31,11 +31,6 @@ int output_fd;
 char fd_name[256];
 
 /*
- * To print the messages of the monitor.
- */
-static int (*output_func)(FILE *, const char *, ...) = NULL;
-
-/*
  * Monitored Functions.
  */
 static int (*real_closedir)(DIR *) = NULL;
