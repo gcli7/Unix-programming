@@ -1,0 +1,34 @@
+Only monitor the functions listed in minimum requirements.
+
+1.	closedir
+2.	opendir
+3.	readdir
+4.	creat
+5.	open
+6.	read
+7.	write
+8.	dup
+9.	dup2
+10.	close
+11.	lstat
+12.	stat
+13.	pwrite
+14.	fopen
+15.	fclose
+16.	fread
+17.	fwrite
+18.	fgetc
+19.	fgets
+20.	fscanf
+21.	fprintf
+22.	chdir
+23.	chown
+24.	chmod
+25.	remove
+26.	rename
+27.	link
+28.	unlink
+29.	readlink
+30.	symlink
+31.	mkdir
+32.	rmdir

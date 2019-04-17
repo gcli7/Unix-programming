@@ -28,7 +28,16 @@
 							} while (0)
 
 int output_fd;
+char fd_name[256];
 
+/*
+ * To print the messages of the monitor.
+ */
+static int (*output_func)(FILE *, const char *, ...) = NULL;
+
+/*
+ * Monitored Functions.
+ */
 static int (*real_closedir)(DIR *) = NULL;
 static DIR * (*real_opendir)(const char *) = NULL;
 static struct dirent * (*real_readdir)(DIR *) = NULL;
@@ -47,6 +56,7 @@ static int (*real_fclose)(FILE *) = NULL;
 static size_t (*real_fread)(void *, size_t, size_t, FILE *) = NULL;
 static size_t (*real_fwrite)(const void *, size_t, size_t, FILE *) = NULL;
 static int (*real_fgetc)(FILE *) = NULL;
+static char *(*real_fgets)(char *, int, FILE *) = NULL;
 //static int (*real_fscanf)(FILE *, const char *, ...) = NULL;
 //static int (*real_fprintf)(FILE *, const char *, ...) = NULL;
 static int (*real_chdir)(const char *);
