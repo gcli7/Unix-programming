@@ -195,6 +195,9 @@ long sys_setuid(uid_t uid);
 long sys_setgid(gid_t gid);
 long sys_geteuid();
 long sys_getegid();
+/* Extended code */
+long sys_alarm(unsigned int seconds);
+/* End of extended code */
 
 /* wrappers */
 ssize_t read(int fd, char *buf, size_t count);
@@ -230,6 +233,9 @@ int setuid(uid_t uid);
 int setgid(gid_t gid);
 uid_t geteuid();
 gid_t getegid();
+/* Extended code */
+int alarm(unsigned int seconds);
+/* End of extended code */
 
 void bzero(void *s, size_t size);
 size_t strlen(const char *s);

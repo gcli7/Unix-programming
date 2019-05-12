@@ -29,6 +29,9 @@ extern errno
     gensys  33, dup2
     gensys  34, pause
     gensys  35, nanosleep
+    ; Extended code
+    gensys  37, alarm
+    ; End of extended code
     gensys  57, fork
     gensys  60, exit
     gensys  79, getcwd
@@ -99,4 +102,3 @@ sleep_failed:
 sleep_quit:
     add     rsp, 32
     ret
-

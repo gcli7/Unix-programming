@@ -167,6 +167,13 @@ gid_t   getegid() {
     WRAPPER_RETval(uid_t);
 }
 
+/* Extended code */
+int alarm(unsigned int seconds) {
+    long ret = sys_alarm(seconds);
+    WRAPPER_RETval(int);
+}
+/* End of extended code */
+
 void bzero(void *s, size_t size) {
     char *ptr = (char *) s;
     while(size-- > 0) *ptr++ = '\0';
@@ -232,7 +239,8 @@ void perror(const char *prefix) {
     return;
 }
 
-#if 0   /* we have an equivalent implementation in assembly */
+#if 0
+/* we have an equivalent implementation in assembly */
 unsigned int sleep(unsigned int seconds) {
     long ret;
     struct timespec req, rem;
