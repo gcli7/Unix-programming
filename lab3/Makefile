@@ -12,5 +12,8 @@ alarm1: alarm1.c
 	gcc -c -g -Wall -fno-stack-protector -nostdlib -I. -I.. -DUSEMINI alarm1.c
 	ld -m elf_x86_64 --dynamic-linker /lib64/ld-linux-x86-64.so.2 -o alarm1 alarm1.o start.o -L. -L.. -lmini
 
+run:
+	LD_LIBRARY_PATH=. ./$(PROG)
+
 clean:
 	rm -f *.o *.so alarm1 alarm2 alarm3 jmp1 testmini
