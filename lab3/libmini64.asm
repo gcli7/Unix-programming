@@ -24,6 +24,9 @@ extern errno
     gensys   9, mmap
     gensys  10, mprotect
     gensys  11, munmap
+    ; Extended code
+    gensys  14, sigprocmask
+    ; End of extended code
     gensys  22, pipe
     gensys  32, dup
     gensys  33, dup2
@@ -53,6 +56,9 @@ extern errno
     gensys 106, setgid
     gensys 107, geteuid
     gensys 108, getegid
+    ; Extended code
+    gensys 127, sigpending
+    ; End of extended code
 
     global open:function
 open:

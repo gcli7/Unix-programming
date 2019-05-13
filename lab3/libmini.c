@@ -172,6 +172,29 @@ int alarm(unsigned int seconds) {
     long ret = sys_alarm(seconds);
     WRAPPER_RETval(int);
 }
+
+void sigemptyset(sigset_t *set) {
+    for (int i = 0; i < _NSIG_WORDS; i++)
+        set->sig[i] = 0;
+}
+
+void sigaddset(sigset_t *set, int signum) {
+    set->sig[0] |= 1UL << (signum - 1);
+}
+
+int sigismember(sigset_t *set, int signum) {
+    return set->sig[0] & (1UL << (signum - 1));
+}
+
+int sigprocmask(int how, const sigset_t *set, sigset_t *oldset) {
+    long ret = sys_sigprocmask(how, set, oldset, sizeof(unsigned long));
+    WRAPPER_RETval(int);
+}
+
+int sigpending(sigset_t *set) {
+    long ret = sys_sigpending(set, sizeof(unsigned long));
+    WRAPPER_RETval(int);
+}
 /* End of extended code */
 
 void bzero(void *s, size_t size) {

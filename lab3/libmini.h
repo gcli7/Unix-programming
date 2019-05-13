@@ -8,6 +8,15 @@ typedef int mode_t;
 typedef int uid_t;
 typedef int gid_t;
 typedef int pid_t;
+/* Extended code */
+#define _NSIG       64
+#define _NSIG_BPW   64
+#define _NSIG_WORDS (_NSIG / _NSIG_BPW)
+
+typedef struct {
+    unsigned long sig[_NSIG_WORDS];
+} sigset_t;
+/* End of extended code */
 
 extern long errno;
 
@@ -197,6 +206,8 @@ long sys_geteuid();
 long sys_getegid();
 /* Extended code */
 long sys_alarm(unsigned int seconds);
+long sys_sigprocmask(int how, const sigset_t *set, sigset_t *oldset, size_t sigsetsize);
+long sys_sigpending(sigset_t *set, size_t sigsetsize);
 /* End of extended code */
 
 /* wrappers */
@@ -235,6 +246,11 @@ uid_t geteuid();
 gid_t getegid();
 /* Extended code */
 int alarm(unsigned int seconds);
+void sigemptyset(sigset_t *set);
+void sigaddset(sigset_t *set, int signum);
+int sigismember(sigset_t *set, int signum);
+int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
+int sigpending(sigset_t *set);
 /* End of extended code */
 
 void bzero(void *s, size_t size);
