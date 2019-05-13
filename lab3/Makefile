@@ -4,13 +4,25 @@ all: start.asm libmini.h libmini.c
 	ld -shared -o libmini.so libmini64.o libmini.o
 	yasm -f elf64 -DYASM -D__x86_64__ -DPIC start.asm -o start.o
 
-testmini: testmini.c
+testmini: testmini.c libmini.so
 	gcc -c -g -Wall -fno-stack-protector -nostdlib -I. -I.. -DUSEMINI testmini.c
 	ld -m elf_x86_64 --dynamic-linker /lib64/ld-linux-x86-64.so.2 -o testmini testmini.o start.o -L. -L.. -lmini
 
-alarm1: alarm1.c
+alarm1: alarm1.c libmini.so
 	gcc -c -g -Wall -fno-stack-protector -nostdlib -I. -I.. -DUSEMINI alarm1.c
 	ld -m elf_x86_64 --dynamic-linker /lib64/ld-linux-x86-64.so.2 -o alarm1 alarm1.o start.o -L. -L.. -lmini
+
+alarm2: alarm2.c libmini.so
+	gcc -c -g -Wall -fno-stack-protector -nostdlib -I. -I.. -DUSEMINI alarm2.c
+	ld -m elf_x86_64 --dynamic-linker /lib64/ld-linux-x86-64.so.2 -o alarm2 alarm2.o start.o -L. -L.. -lmini
+
+alarm3: alarm3.c libmini.so
+	gcc -c -g -Wall -fno-stack-protector -nostdlib -I. -I.. -DUSEMINI alarm3.c
+	ld -m elf_x86_64 --dynamic-linker /lib64/ld-linux-x86-64.so.3 -o alarm3 alarm3.o start.o -L. -L.. -lmini
+
+jmp1: jmp1.c libmini.so
+	gcc -o jmp1.o -c -g -Wall -fno-stack-protector -nostdlib -I. -I.. -DUSEMINI jmp1.c
+	ld -m elf_x86_64 --dynamic-linker /lib64/ld-linux-x86-64.so.2 -o jmp1 jmp1.o start.o -L. -L.. -lmini
 
 run:
 	LD_LIBRARY_PATH=. ./$(PROG)
