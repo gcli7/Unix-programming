@@ -13,9 +13,29 @@ typedef int pid_t;
 #define _NSIG_BPW   64
 #define _NSIG_WORDS (_NSIG / _NSIG_BPW)
 
+#define SIG_DFL ((sighandler_t)0) /* default signal handling */
+#define SIG_IGN ((sighandler_t)1) /* ignore signal */
+#define SIG_ERR ((sighandler_t)-1)    /* error return from signal */
+
+typedef void (*sighandler_t)(int);
+
 typedef struct {
     unsigned long sig[_NSIG_WORDS];
 } sigset_t;
+
+struct sigaction {
+    /*
+    sighandler_t sa_handler;
+    void (*sa_sigaction)(int, void *, void *);
+    sigset_t sa_mask;
+    int sa_flags;
+    void (*sa_restorer)(void);
+    */
+    sighandler_t sa_handler;
+    unsigned long sa_flags;
+    void (*sa_restorer)(void);
+    sigset_t sa_mask;
+};
 /* End of extended code */
 
 extern long errno;
@@ -144,12 +164,13 @@ extern long errno;
 #define SA_NOCLDWAIT  2      /* Don't create zombie on child death.  */
 #define SA_SIGINFO    4      /* Invoke signal-catching function with
                                 three arguments instead of one.  */
-# define SA_ONSTACK   0x08000000 /* Use signal stack by using `sa_restorer'. */
-# define SA_RESTART   0x10000000 /* Restart syscall on signal return.  */
-# define SA_INTERRUPT 0x20000000 /* Historical no-op.  */
-# define SA_NODEFER   0x40000000 /* Don't automatically block the signal when
+#define SA_RESTORER  0x04000000
+#define SA_ONSTACK   0x08000000 /* Use signal stack by using `sa_restorer'. */
+#define SA_RESTART   0x10000000 /* Restart syscall on signal return.  */
+#define SA_INTERRUPT 0x20000000 /* Historical no-op.  */
+#define SA_NODEFER   0x40000000 /* Don't automatically block the signal when
                                     its handler is being executed.  */
-# define SA_RESETHAND 0x80000000 /* Reset to SIG_DFL on entry to handler.  */
+#define SA_RESETHAND 0x80000000 /* Reset to SIG_DFL on entry to handler.  */
 
 #define SIG_BLOCK     0      /* Block signals.  */
 #define SIG_UNBLOCK   1      /* Unblock signals.  */
@@ -208,6 +229,8 @@ long sys_getegid();
 long sys_alarm(unsigned int seconds);
 long sys_sigprocmask(int how, const sigset_t *set, sigset_t *oldset, size_t sigsetsize);
 long sys_sigpending(sigset_t *set, size_t sigsetsize);
+long sys_sigreturn(unsigned long unused);
+long sys_sigaction(int signum, struct sigaction *act, struct sigaction *oldact, size_t sigsetsize);
 /* End of extended code */
 
 /* wrappers */
@@ -251,6 +274,8 @@ void sigaddset(sigset_t *set, int signum);
 int sigismember(sigset_t *set, int signum);
 int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
 int sigpending(sigset_t *set);
+sighandler_t signal(int signum, sighandler_t handler);
+int sigaction(int signum, struct sigaction *act, struct sigaction *oldact);
 /* End of extended code */
 
 void bzero(void *s, size_t size);

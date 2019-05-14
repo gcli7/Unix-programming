@@ -25,7 +25,9 @@ extern errno
     gensys  10, mprotect
     gensys  11, munmap
     ; Extended code
+    gensys  13, sigaction
     gensys  14, sigprocmask
+    gensys  15, sigreturn
     ; End of extended code
     gensys  22, pipe
     gensys  32, dup
@@ -107,4 +109,19 @@ sleep_failed:
     mov     rax, 0              ; return 0 on error
 sleep_quit:
     add     rsp, 32
+    ret
+
+    global sigaction:function
+sigaction:
+    or      QWORD [rsi+8], 0x04000000
+    lea     rax, [rel sigreturn]
+    mov     QWORD [rsi+16], rax
+    mov     r10, 8
+    mov     rax, 13
+    syscall
+    ret
+
+sigreturn:
+    mov     rax, 15
+    syscall
     ret

@@ -187,14 +187,36 @@ int sigismember(sigset_t *set, int signum) {
 }
 
 int sigprocmask(int how, const sigset_t *set, sigset_t *oldset) {
-    long ret = sys_sigprocmask(how, set, oldset, sizeof(unsigned long));
+    long ret = sys_sigprocmask(how, set, oldset, sizeof(sigset_t));
     WRAPPER_RETval(int);
 }
 
 int sigpending(sigset_t *set) {
-    long ret = sys_sigpending(set, sizeof(unsigned long));
+    long ret = sys_sigpending(set, sizeof(sigset_t));
     WRAPPER_RETval(int);
 }
+/*
+void sigreturn(void) {
+    unsigned long unused = 0;
+    sys_sigreturn(unused);
+}
+*/
+sighandler_t signal(int signum, sighandler_t handler) {
+    struct sigaction act, oldact;
+    act.sa_flags = 0;
+    sigemptyset(&act.sa_mask);
+    act.sa_handler = handler;
+    sigaction(signum, &act, &oldact);
+    return handler;
+}
+/*
+int sigaction(int signum, struct sigaction *act, struct sigaction *oldact) {
+    act->sa_flags |= SA_RESTORER;
+    act->sa_restorer = &sigreturn;
+    long ret = sys_sigaction(signum, act, oldact, sizeof(sigset_t));
+    WRAPPER_RETval(int);
+}
+*/
 /* End of extended code */
 
 void bzero(void *s, size_t size) {
