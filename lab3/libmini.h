@@ -229,8 +229,8 @@ long sys_getegid();
 long sys_alarm(unsigned int seconds);
 long sys_sigprocmask(int how, const sigset_t *set, sigset_t *oldset, size_t sigsetsize);
 long sys_sigpending(sigset_t *set, size_t sigsetsize);
-long sys_sigreturn(unsigned long unused);
 long sys_sigaction(int signum, struct sigaction *act, struct sigaction *oldact, size_t sigsetsize);
+long sigreturn(unsigned long unused);
 /* End of extended code */
 
 /* wrappers */

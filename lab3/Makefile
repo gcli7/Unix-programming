@@ -28,4 +28,4 @@ run:
 	LD_LIBRARY_PATH=. ./$(PROG)
 
 clean:
-	rm -f *.o *.so alarm1 alarm2 alarm3 jmp1 testmini
+	rm -f *.s *.o *.so alarm1 alarm2 alarm3 jmp1 testmini
