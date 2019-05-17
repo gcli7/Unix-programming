@@ -31,13 +31,26 @@ int alarm(unsigned int seconds) {
     WRAPPER_RETval(int);
 }
 
-void sigemptyset(sigset_t *set) {
+int sigemptyset(sigset_t *set) {
     for (int i = 0; i < _NSIG_WORDS; i++)
         set->sig[i] = 0;
+    return 0;
 }
 
-void sigaddset(sigset_t *set, int signum) {
+int sigfillset(sigset_t *set) {
+    for (int i = 0; i < _NSIG_WORDS; i++)
+        set->sig[i] = -1;
+    return 0;
+}
+
+int sigaddset(sigset_t *set, int signum) {
     set->sig[0] |= 1UL << (signum - 1);
+    return 0;
+}
+
+int sigdelset(sigset_t *set, int signum) {
+    set->sig[0] &= ~(1UL << (signum - 1));
+    return 0;
 }
 
 int sigismember(sigset_t *set, int signum) {
@@ -65,7 +78,7 @@ sighandler_t signal(int signum, sighandler_t handler) {
 
 int sigaction(int signum, struct sigaction *act, struct sigaction *oldact) {
     act->sa_flags |= SA_RESTORER;
-    act->sa_restorer = (void (*)(void))&sigreturn;
+    act->sa_restorer = (void (*)(void))&sys_sigreturn;
     long ret = sys_sigaction(signum, act, oldact, sizeof(sigset_t));
     WRAPPER_RETval(int);
 }

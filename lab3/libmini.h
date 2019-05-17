@@ -112,7 +112,7 @@ long sys_alarm(unsigned int seconds);
 long sys_sigprocmask(int how, const sigset_t *set, sigset_t *oldset, size_t sigsetsize);
 long sys_sigpending(sigset_t *set, size_t sigsetsize);
 long sys_sigaction(int signum, struct sigaction *act, struct sigaction *oldact, size_t sigsetsize);
-long sigreturn(unsigned long unused);
+long sys_sigreturn(unsigned long unused);
 /* End of extended code */
 
 /* wrappers */
@@ -121,10 +121,13 @@ int pause();
 int nanosleep(struct timespec *rqtp, struct timespec *rmtp);
 void exit(int error_code);
 /* Extended code */
-int alarm(unsigned int seconds);
-void sigemptyset(sigset_t *set);
-void sigaddset(sigset_t *set, int signum);
+int sigemptyset(sigset_t *set);
+int sigfillset(sigset_t *set);
+int sigaddset(sigset_t *set, int signum);
+int sigdelset(sigset_t *set, int signum);
 int sigismember(sigset_t *set, int signum);
+
+int alarm(unsigned int seconds);
 int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
 int sigpending(sigset_t *set);
 sighandler_t signal(int signum, sighandler_t handler);

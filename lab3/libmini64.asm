@@ -54,8 +54,8 @@ sleep_quit:
     add     rsp, 32
     ret
 
-    global sigreturn:function
-sigreturn:
+    global sys_sigreturn:function
+sys_sigreturn:
     mov     rax, 15
     syscall
     ret
