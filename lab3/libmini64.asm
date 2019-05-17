@@ -17,74 +17,18 @@ extern errno
 
     section .text
 
-    gensys   0, read
     gensys   1, write
-    gensys   2, open
-    gensys   3, close
-    gensys   9, mmap
-    gensys  10, mprotect
-    gensys  11, munmap
     ; Extended code
     gensys  13, sigaction
     gensys  14, sigprocmask
     ; End of extended code
-    gensys  22, pipe
-    gensys  32, dup
-    gensys  33, dup2
     gensys  34, pause
     gensys  35, nanosleep
     ; Extended code
     gensys  37, alarm
-    ; End of extended code
-    gensys  57, fork
     gensys  60, exit
-    gensys  79, getcwd
-    gensys  80, chdir
-    gensys  82, rename
-    gensys  83, mkdir
-    gensys  84, rmdir
-    gensys  85, creat
-    gensys  86, link
-    gensys  88, unlink
-    gensys  89, readlink
-    gensys  90, chmod
-    gensys  92, chown
-    gensys  95, umask
-    gensys  96, gettimeofday
-    gensys 102, getuid
-    gensys 104, getgid
-    gensys 105, setuid
-    gensys 106, setgid
-    gensys 107, geteuid
-    gensys 108, getegid
-    ; Extended code
     gensys 127, sigpending
     ; End of extended code
-
-    global open:function
-open:
-    call    sys_open
-    cmp     rax, 0
-    jge     open_success        ; no error :)
-open_error:
-    neg     rax
-%ifdef NASM
-    mov     rdi, [rel errno wrt ..gotpc]
-%else
-    mov     rdi, [rel errno wrt ..gotpcrel]
-%endif
-    mov     [rdi], rax          ; errno = -rax
-    mov     rax, -1
-    jmp     open_quit
-open_success:
-%ifdef NASM
-    mov     rdi, [rel errno wrt ..gotpc]
-%else
-    mov     rdi, [rel errno wrt ..gotpcrel]
-%endif
-    mov     QWORD [rdi], 0      ; errno = 0
-open_quit:
-    ret
 
     global sleep:function
 sleep:
