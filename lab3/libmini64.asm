@@ -30,6 +30,7 @@ extern errno
     gensys 127, sigpending
     ; End of extended code
 
+
     global sleep:function
 sleep:
     sub     rsp, 32             ; allocate timespec * 2
@@ -54,8 +55,52 @@ sleep_quit:
     add     rsp, 32
     ret
 
+
     global sys_sigreturn:function
 sys_sigreturn:
     mov     rax, 15
     syscall
+    ret
+
+
+    global setjmp:function
+setjmp:
+    mov     QWORD [rdi], rbx
+    mov     QWORD [rdi+8], rsp
+    mov     QWORD [rdi+16], rbp
+    mov     QWORD [rdi+24], r12
+    mov     QWORD [rdi+32], r13
+    mov     QWORD [rdi+40], r14
+    mov     QWORD [rdi+48], r15
+
+    mov rax, QWORD [rsp]
+    mov QWORD [rdi+56], rax
+
+    mov     rsi, 0
+    lea     rdx, [rdi+64]
+    call    sys_sigprocmask
+    mov     rax, 0
+    ret
+
+
+    global longjmp:function
+longjmp:
+    mov     rbx, QWORD [rdi]
+    mov     rsp, QWORD [rdi+8]
+    mov     rbp, QWORD [rdi+16]
+    mov     r12, QWORD [rdi+24]
+    mov     r13, QWORD [rdi+32]
+    mov     r14, QWORD [rdi+40]
+    mov     r15, QWORD [rdi+48]
+
+    pop rax
+    mov rax, QWORD [rdi+56]
+    push rax
+
+    push    rsi
+    mov     rdi, 2
+    lea     rsi, [rdi+64]
+    mov     rdx, 0
+    call    sys_sigprocmask
+    pop     rax
     ret

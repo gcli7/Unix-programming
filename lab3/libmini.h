@@ -3,35 +3,6 @@
 
 typedef long long size_t;
 typedef long long ssize_t;
-/* Extended code */
-#define _NSIG       64
-#define _NSIG_BPW   64
-#define _NSIG_WORDS (_NSIG / _NSIG_BPW)
-
-#define SIG_DFL ((sighandler_t)0) /* default signal handling */
-#define SIG_IGN ((sighandler_t)1) /* ignore signal */
-#define SIG_ERR ((sighandler_t)-1)    /* error return from signal */
-
-typedef void (*sighandler_t)(int);
-
-typedef struct {
-    unsigned long sig[_NSIG_WORDS];
-} sigset_t;
-
-struct sigaction {
-    /*
-    sighandler_t sa_handler;
-    void (*sa_sigaction)(int, void *, void *);
-    sigset_t sa_mask;
-    int sa_flags;
-    void (*sa_restorer)(void);
-    */
-    sighandler_t sa_handler;
-    unsigned long sa_flags;
-    void (*sa_restorer)(void);
-    sigset_t sa_mask;
-};
-/* End of extended code */
 
 extern long errno;
 
@@ -102,6 +73,41 @@ struct timezone {
     int tz_dsttime;     /* type of DST correction */
 };
 
+/* Extended code */
+#define _NSIG       64
+#define _NSIG_BPW   64
+#define _NSIG_WORDS (_NSIG / _NSIG_BPW)
+
+#define SIG_DFL ((sighandler_t)0) /* default signal handling */
+#define SIG_IGN ((sighandler_t)1) /* ignore signal */
+#define SIG_ERR ((sighandler_t)-1)    /* error return from signal */
+
+typedef void (*sighandler_t)(int);
+
+typedef struct {
+    unsigned long sig[_NSIG_WORDS];
+} sigset_t;
+
+struct sigaction {
+    /*
+    sighandler_t sa_handler;
+    void (*sa_sigaction)(int, void *, void *);
+    sigset_t sa_mask;
+    int sa_flags;
+    void (*sa_restorer)(void);
+    */
+    sighandler_t sa_handler;
+    unsigned long sa_flags;
+    void (*sa_restorer)(void);
+    sigset_t sa_mask;
+};
+
+typedef struct jmp_buf_s {
+    long long reg[8];
+    sigset_t mask;
+} jmp_buf[1];
+/* End of extended code */
+
 /* system calls */
 long sys_write(int fd, const void *buf, size_t count);
 long sys_pause();
@@ -132,6 +138,8 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
 int sigpending(sigset_t *set);
 sighandler_t signal(int signum, sighandler_t handler);
 int sigaction(int signum, struct sigaction *act, struct sigaction *oldact);
+int setjmp(jmp_buf env);
+void longjmp(jmp_buf env, int val);
 /* End of extended code */
 
 size_t strlen(const char *s);
