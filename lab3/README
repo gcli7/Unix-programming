@@ -1,0 +1,8 @@
+All features have been implemented.
+Include the following:
+    1. alarm
+    2. sigprocmask
+    3. sigpending
+    4. functions to handle sigset_t data type
+    5. setjmp and longjmp
+    6. signal and sigaction
