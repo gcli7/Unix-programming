@@ -3,10 +3,99 @@
 
 typedef long long size_t;
 typedef long long ssize_t;
+typedef long long off_t;
+typedef int mode_t;
+typedef int uid_t;
+typedef int gid_t;
+typedef int pid_t;
 
 extern long errno;
 
 #define NULL ((void*) 0)
+
+/* from /usr/include/asm-generic/fcntl.h */
+#define O_ACCMODE   00000003
+#define O_RDONLY    00000000
+#define O_WRONLY    00000001
+#define O_RDWR      00000002
+#ifndef O_CREAT
+#define O_CREAT     00000100    /* not fcntl */
+#endif
+#ifndef O_EXCL
+#define O_EXCL      00000200    /* not fcntl */
+#endif
+#ifndef O_NOCTTY
+#define O_NOCTTY    00000400    /* not fcntl */
+#endif
+#ifndef O_TRUNC
+#define O_TRUNC     00001000    /* not fcntl */
+#endif
+#ifndef O_APPEND
+#define O_APPEND    00002000
+#endif
+#ifndef O_NONBLOCK
+#define O_NONBLOCK  00004000
+#endif
+#ifndef O_DSYNC
+#define O_DSYNC     00010000    /* used to be O_SYNC, see below */
+#endif
+#ifndef FASYNC
+#define FASYNC      00020000    /* fcntl, for BSD compatibility */
+#endif
+#ifndef O_DIRECT
+#define O_DIRECT    00040000    /* direct disk access hint */
+#endif
+#ifndef O_LARGEFILE
+#define O_LARGEFILE 00100000
+#endif
+#ifndef O_DIRECTORY
+#define O_DIRECTORY 00200000    /* must be a directory */
+#endif
+#ifndef O_NOFOLLOW
+#define O_NOFOLLOW  00400000    /* don't follow links */
+#endif
+#ifndef O_NOATIME
+#define O_NOATIME   01000000
+#endif
+#ifndef O_CLOEXEC
+#define O_CLOEXEC   02000000    /* set close_on_exec */
+#endif
+
+/* from /usr/include/asm-generic/errno-base.h */
+#define EPERM        1  /* Operation not permitted */
+#define ENOENT       2  /* No such file or directory */
+#define ESRCH        3  /* No such process */
+#define EINTR        4  /* Interrupted system call */
+#define EIO          5  /* I/O error */
+#define ENXIO        6  /* No such device or address */
+#define E2BIG        7  /* Argument list too long */
+#define ENOEXEC      8  /* Exec format error */
+#define EBADF        9  /* Bad file number */
+#define ECHILD      10  /* No child processes */
+#define EAGAIN      11  /* Try again */
+#define ENOMEM      12  /* Out of memory */
+#define EACCES      13  /* Permission denied */
+#define EFAULT      14  /* Bad address */
+#define ENOTBLK     15  /* Block device required */
+#define EBUSY       16  /* Device or resource busy */
+#define EEXIST      17  /* File exists */
+#define EXDEV       18  /* Cross-device link */
+#define ENODEV      19  /* No such device */
+#define ENOTDIR     20  /* Not a directory */
+#define EISDIR      21  /* Is a directory */
+#define EINVAL      22  /* Invalid argument */
+#define ENFILE      23  /* File table overflow */
+#define EMFILE      24  /* Too many open files */
+#define ENOTTY      25  /* Not a typewriter */
+#define ETXTBSY     26  /* Text file busy */
+#define EFBIG       27  /* File too large */
+#define ENOSPC      28  /* No space left on device */
+#define ESPIPE      29  /* Illegal seek */
+#define EROFS       30  /* Read-only file system */
+#define EMLINK      31  /* Too many links */
+#define EPIPE       32  /* Broken pipe */
+#define EDOM        33  /* Math argument out of domain of func */
+#define ERANGE      34  /* Math result not representable */
 
 /* from /usr/include/x86_64-linux-gnu/asm/signal.h */
 #define SIGHUP       1
@@ -109,10 +198,39 @@ typedef struct jmp_buf_s {
 /* End of extended code */
 
 /* system calls */
+long sys_read(int fd, char *buf, size_t count);
 long sys_write(int fd, const void *buf, size_t count);
+long sys_open(const char *filename, int flags, ... /*mode*/);
+long sys_close(unsigned int fd);
+long sys_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t off);
+long sys_mprotect(void *addr, size_t len, int prot);
+long sys_munmap(void *addr, size_t len);
+long sys_pipe(int *filedes);
+long sys_dup(int filedes);
+long sys_dup2(int oldfd, int newfd);
 long sys_pause();
 long sys_nanosleep(struct timespec *rqtp, struct timespec *rmtp);
+long sys_fork(void);
 long sys_exit(int error_code) __attribute__ ((noreturn));
+long sys_getcwd(char *buf, size_t size);
+long sys_chdir(const char *pathname);
+long sys_rename(const char *oldname, const char *newname);
+long sys_mkdir(const char *pathname, int mode);
+long sys_rmdir(const char *pathname);
+long sys_creat(const char *pathname, int mode);
+long sys_link(const char *oldname, const char *newname);
+long sys_unlink(const char *pathname);
+long sys_readlink(const char *path, char *buf, size_t bufsz);
+long sys_chmod(const char *filename, mode_t mode);
+long sys_chown(const char *filename, uid_t user, gid_t group);
+long sys_umask(int mask);
+long sys_gettimeofday(struct timeval *tv, struct timezone *tz);
+long sys_getuid();
+long sys_getgid();
+long sys_setuid(uid_t uid);
+long sys_setgid(gid_t gid);
+long sys_geteuid();
+long sys_getegid();
 /* Extended code */
 long sys_alarm(unsigned int seconds);
 long sys_sigprocmask(int how, const sigset_t *set, sigset_t *oldset, size_t sigsetsize);
@@ -122,10 +240,39 @@ long sys_sigreturn(unsigned long unused);
 /* End of extended code */
 
 /* wrappers */
+ssize_t read(int fd, char *buf, size_t count);
 ssize_t write(int fd, const void *buf, size_t count);
+int open(const char *filename, int flags, ... /*mode*/);
+int close(unsigned int fd);
+void *mmap(void *addr, size_t len, int prot, int flags, int fd, off_t off);
+int mprotect(void *addr, size_t len, int prot);
+int munmap(void *addr, size_t len);
+int pipe(int *filedes);
+int dup(int filedes);
+int dup2(int oldfd, int newfd);
 int pause();
 int nanosleep(struct timespec *rqtp, struct timespec *rmtp);
+pid_t fork(void);
 void exit(int error_code);
+char *getcwd(char *buf, size_t size);
+int chdir(const char *pathname);
+int rename(const char *oldname, const char *newname);
+int mkdir(const char *pathname, int mode);
+int rmdir(const char *pathname);
+int creat(const char *pathname, int mode);
+int link(const char *oldname, const char *newname);
+int unlink(const char *pathname);
+ssize_t readlink(const char *path, char *buf, size_t bufsz);
+int chmod(const char *filename, mode_t mode);
+int chown(const char *filename, uid_t user, gid_t group);
+int umask(int mask);
+int gettimeofday(struct timeval *tv, struct timezone *tz);
+uid_t getuid();
+gid_t getgid();
+int setuid(uid_t uid);
+int setgid(gid_t gid);
+uid_t geteuid();
+gid_t getegid();
 /* Extended code */
 int sigemptyset(sigset_t *set);
 int sigfillset(sigset_t *set);
@@ -142,6 +289,7 @@ int setjmp(jmp_buf env);
 void longjmp(jmp_buf env, int val);
 /* End of extended code */
 
+void bzero(void *s, size_t size);
 size_t strlen(const char *s);
 void perror(const char *prefix);
 unsigned int sleep(unsigned int s);
