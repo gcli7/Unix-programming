@@ -57,6 +57,14 @@ void elf_parse(const char *file_name) {
     }
 }
 
+int run_program() {
+    ptrace(PTRACE_CONT, child, 0, 0);
+    printf("** program sample/hello64 is already running.\n");
+    if (waitpid(child, &pid_status, 0) < 0)
+        print_error("waitpid failed!");
+    return 0;
+}
+
 int start_program(const char *file_name) {
     child = fork();
     if (child < 0)
@@ -96,6 +104,8 @@ int command() {
         return load_program(input[1]);
     else if (!strcmp(input[0], "start") && status == loaded)
         return start_program(program);
+    else if ((!strcmp(input[0], "r") || !strcmp(input[0], "run")) && status == running)
+        return run_program();
 
     ILLEGAL;
     return -1;
