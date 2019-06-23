@@ -109,6 +109,26 @@ int load_program(const char *file_name) {
     return 0;
 }
 
+int show_help() {
+	printf("** - break {instruction-address}: add a break point\n");
+	printf("** - cont: continue execution\n");
+	printf("** - delete {break-point-id}: remove a break point\n");
+	printf("** - disasm addr: disassemble instructions in a file or a memory region\n");
+	printf("** - dump addr [length]: dump memory content\n");
+	printf("** - exit: terminate the debugger\n");
+	printf("** - get reg: get a single value from a register\n");
+	printf("** - getregs: show registers\n");
+	printf("** - help: show this message\n");
+	printf("** - list: list break points\n");
+	printf("** - load {path/to/a/program}: load a program\n");
+	printf("** - run: run the program\n");
+	printf("** - vmmap: show memory layout\n");
+	printf("** - set reg val: get a single value to a register\n");
+	printf("** - si: step into instruction\n");
+	printf("** - start: start the program and stop at the first instruction\n");
+    return -1;
+}
+
 int command() {
     if (!strcmp(input[0], "load") && status == non_loaded)
         return load_program(input[1]);
@@ -118,6 +138,8 @@ int command() {
         return run_program();
     else if (!strcmp(input[0], "si") && status == running)
         return run_single();
+    else if (!strcmp(input[0], "help"))
+        return show_help();
 
     ILLEGAL;
     return -1;
