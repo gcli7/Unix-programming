@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/wait.h>
 #include <sys/types.h>
+#include <sys/ptrace.h>
 #include "elftool.h"
 
 #define ILLEGAL printf("** This command is illegal now.\n")
@@ -20,6 +22,10 @@ enum {
     loaded,
     running
 } status;
+
+pid_t child;
+char program[INPUT_LEN];
+int pid_status;
 
 void print_error(const char *s) {
     printf("** Error: %s\n", s);
@@ -51,6 +57,27 @@ void elf_parse(const char *file_name) {
     }
 }
 
+int start_program(const char *file_name) {
+    child = fork();
+    if (child < 0)
+        print_error("fork failed!");
+    if (!child) {
+        if (ptrace(PTRACE_TRACEME, 0, 0, 0) < 0)
+            print_error("trace me failed!");
+        if (execlp(file_name, file_name, NULL) < 0)
+            print_error("execlp failed!");
+        exit(0);
+    }
+    else {
+        if (waitpid(child, &pid_status, 0) < 0)
+            print_error("waitpid failed!");
+        ptrace(PTRACE_SETOPTIONS, child, 0, PTRACE_O_EXITKILL);
+        printf("** pid %d\n", child);
+        status = running;
+    }
+    return 0;
+}
+
 int load_program(const char *file_name) {
     if (access(file_name, 0)) {
         printf("** The executable does not exist.\n");
@@ -58,6 +85,9 @@ int load_program(const char *file_name) {
     }
 
     elf_parse(file_name);
+    strcpy(program, file_name);
+    status = loaded;
+
     return 0;
 }
 
@@ -65,7 +95,7 @@ int command() {
     if (!strcmp(input[0], "load") && status == non_loaded)
         return load_program(input[1]);
     else if (!strcmp(input[0], "start") && status == loaded)
-        return 0;
+        return start_program(program);
 
     ILLEGAL;
     return -1;
@@ -95,8 +125,12 @@ int main(int argc, char **argv) {
     else
         load_program(argv[1]);
 
-    status = loaded;
-    // start
+    while (1) {
+        if (wait_input())
+            continue;
+        if (!WIFSTOPPED(pid_status))
+            break;
+    }
 
     return 0;
 }
