@@ -57,8 +57,17 @@ void elf_parse(const char *file_name) {
     }
 }
 
+int run_single() {
+    if(ptrace(PTRACE_SINGLESTEP, child, 0, 0) < 0)
+        print_error("PTRACE_SINGLESTEP failed!");
+    if (waitpid(child, &pid_status, 0) < 0)
+        print_error("waitpid failed!");
+    return 0;
+}
+
 int run_program() {
-    ptrace(PTRACE_CONT, child, 0, 0);
+    if (ptrace(PTRACE_CONT, child, 0, 0) < 0)
+        print_error("PTRACE_CONT failed!");
     printf("** program sample/hello64 is already running.\n");
     if (waitpid(child, &pid_status, 0) < 0)
         print_error("waitpid failed!");
@@ -71,7 +80,7 @@ int start_program(const char *file_name) {
         print_error("fork failed!");
     if (!child) {
         if (ptrace(PTRACE_TRACEME, 0, 0, 0) < 0)
-            print_error("trace me failed!");
+            print_error("PTRACE_TRACEME failed!");
         if (execlp(file_name, file_name, NULL) < 0)
             print_error("execlp failed!");
         exit(0);
@@ -79,7 +88,8 @@ int start_program(const char *file_name) {
     else {
         if (waitpid(child, &pid_status, 0) < 0)
             print_error("waitpid failed!");
-        ptrace(PTRACE_SETOPTIONS, child, 0, PTRACE_O_EXITKILL);
+        if (ptrace(PTRACE_SETOPTIONS, child, 0, PTRACE_O_EXITKILL) < 0 )
+            print_error("PTRACE_SETOPTIONS failed!");
         printf("** pid %d\n", child);
         status = running;
     }
@@ -106,6 +116,8 @@ int command() {
         return start_program(program);
     else if ((!strcmp(input[0], "r") || !strcmp(input[0], "run")) && status == running)
         return run_program();
+    else if (!strcmp(input[0], "si") && status == running)
+        return run_single();
 
     ILLEGAL;
     return -1;
