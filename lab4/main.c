@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/user.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include "elftool.h"
@@ -55,6 +56,18 @@ void elf_parse(const char *file_name) {
         if (!strcmp(&tab->data[eh->shdr[i].name], ".text"))
             printf("** program '%s' loaded. entry point 0x%llx, vaddr %llx, offset 0x%llx, size 0x%llx\n", file_name, eh->shdr[i].addr, eh->shdr[i].addr, eh->shdr[i].offset, eh->shdr[i].size);
     }
+}
+
+int get_all_registers() {
+    struct user_regs_struct regs;
+    if(ptrace(PTRACE_GETREGS, child, 0, &regs) < 0)
+        print_error("PTRACE_GETREGS failed!");
+    printf("RAX %llx\tRBX %llx\tRCX %llx\tRDX %llx\n", regs.rax, regs.rbx, regs.rcx, regs.rdx);
+    printf("R8  %llx\tR9  %llx\tR10 %llx\tR11 %llx\n", regs.r8, regs.r9, regs.r10, regs.r11);
+    printf("R12 %llx\tR13 %llx\tR14 %llx\tR15 %llx\n", regs.r12, regs.r13, regs.r14, regs.r15);
+    printf("RDI %llx\tRSI %llx\tRBP %llx\tRSP %llx\n", regs.rdi, regs.rsi, regs.rbp, regs.rsp);
+    printf("RIP %llx\tFLAGS %016llx\n", regs.rip, regs.eflags);
+    return 0;
 }
 
 int run_single() {
@@ -138,6 +151,8 @@ int command() {
         return run_program();
     else if (!strcmp(input[0], "si") && status == running)
         return run_single();
+    else if (!strcmp(input[0], "getregs") && status == running)
+        return get_all_registers();
     else if (!strcmp(input[0], "help"))
         return show_help();
 
