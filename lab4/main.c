@@ -18,11 +18,19 @@ char buffer[BUFFER_LEN];
 char input[INPUT_SIZE][INPUT_LEN];
 int input_len;
 
-enum {
+enum stat {
     non_loaded,
     loaded,
     running
 } status;
+
+#define MAX_BP 256
+struct break_point {
+    enum stat status;
+    unsigned long long addr;
+    unsigned long original_instruction;
+} bp_table[MAX_BP];
+int bp_index;
 
 struct elf_data {
     unsigned long long addr;
@@ -227,6 +235,12 @@ void load_program(const char *file_name) {
     status = loaded;
 }
 
+void list_breakpoint() {
+    for (int i = 0; i < bp_index; i++)
+        if (bp_table[i].status != non_loaded)
+            printf("%3d:%8llx\n", i, bp_table[i].addr);
+}
+
 void show_help() {
 	printf("** - break {instruction-address}: add a break point\n");
 	printf("** - cont: continue execution\n");
@@ -352,6 +366,8 @@ int command() {
         get_all_registers();
     else if (!strcmp(input[0], "help"))
         show_help();
+    else if (!strcmp(input[0], "l") || !strcmp(input[0], "list"))
+        list_breakpoint();
     else if (!strcmp(input[0], "load") && status == non_loaded)
         load_program(input[1]);
     else if ((!strcmp(input[0], "r") || !strcmp(input[0], "run")) && (status == loaded || status == running))
