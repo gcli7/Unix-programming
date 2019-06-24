@@ -10,7 +10,7 @@
 
 #define ILLEGAL printf("** This command is illegal now.\n")
 
-#define BUFFER_LEN 256
+#define BUFFER_LEN 512
 char buffer[BUFFER_LEN];
 
 #define INPUT_LEN 32
@@ -24,6 +24,12 @@ enum {
     running
 } status;
 
+struct elf_data {
+    unsigned long long addr;
+    unsigned long long offset;
+    unsigned long long size;
+};
+
 pid_t child;
 char program[INPUT_LEN];
 int pid_status;
@@ -33,7 +39,7 @@ void print_error(const char *s) {
     exit(-1);
 }
 
-void elf_parse(const char *file_name) {
+void elf_parse(const char *file_name, struct elf_data *data) {
     elf_handle_t *eh = NULL;
     elf_strtab_t *tab = NULL;
 
@@ -52,16 +58,19 @@ void elf_parse(const char *file_name) {
         print_error("section header string table not found.");
     }
 
-    for(int i = 0; i < eh->shnum; i++) {
-        if (!strcmp(&tab->data[eh->shdr[i].name], ".text"))
-            printf("** program '%s' loaded. entry point 0x%llx, vaddr %llx, offset 0x%llx, size 0x%llx\n", file_name, eh->shdr[i].addr, eh->shdr[i].addr, eh->shdr[i].offset, eh->shdr[i].size);
-    }
+    for(int i = 0; i < eh->shnum; i++)
+        if (!strcmp(&tab->data[eh->shdr[i].name], ".text")) {
+            data->addr = eh->shdr[i].addr;
+            data->offset = eh->shdr[i].offset;
+            data->size = eh->shdr[i].size;
+        }
 }
 
-int start_program(const char *file_name) {
+void start_program(const char *file_name) {
     child = fork();
     if (child < 0)
         print_error("fork failed!");
+
     if (!child) {
         if (ptrace(PTRACE_TRACEME, 0, 0, 0) < 0)
             print_error("PTRACE_TRACEME failed!");
@@ -77,43 +86,76 @@ int start_program(const char *file_name) {
         printf("** pid %d\n", child);
         status = running;
     }
-    return 0;
 }
 
-int run_single() {
+void run_single() {
     if(ptrace(PTRACE_SINGLESTEP, child, 0, 0) < 0)
         print_error("PTRACE_SINGLESTEP failed!");
     if (waitpid(child, &pid_status, 0) < 0)
         print_error("waitpid failed!");
-    return 0;
 }
 
-int run_program() {
+void show_vmmap(const char *file_name) {
+    if (status == loaded) {
+        struct elf_data data;
+        elf_parse(file_name, &data);
+        printf("%016llx-%016llx r-x %llx\t%s\n", data.addr, data.addr + data.size, data.offset, file_name);
+    }
+    else {
+        sprintf(buffer, "/proc/%d/maps", child);
+        FILE *f = fopen(buffer, "r");
+        if (!f)
+            print_error("maps open failed!");
+
+        char *token;
+        while (fgets(buffer, BUFFER_LEN, f)) {
+            buffer[strlen(buffer) - 1] = '\0';
+            token = strtok(buffer, "-");
+            printf("%016llx", strtoll(token, NULL, 16));
+            token = strtok(NULL, " ");
+            printf("-%016llx", strtoll(token, NULL, 16));
+            token = strtok(NULL, " ");
+            printf(" %s", token);
+            token = strtok(NULL, " ");
+            printf(" %-9d", atoi(token));
+            token = strtok(NULL, " ");
+            token = strtok(NULL, " ");
+            token = strtok(NULL, " ");
+            if (token)
+                printf("%s", token);
+            printf("\n");
+        }
+
+        fclose(f);
+    }
+}
+
+void run_program() {
     if (status == running)
         printf("** program sample/hello64 is already running.\n");
     else
         start_program(program);
+
     if (ptrace(PTRACE_CONT, child, 0, 0) < 0)
         print_error("PTRACE_CONT failed!");
     if (waitpid(child, &pid_status, 0) < 0)
         print_error("waitpid failed!");
-    return 0;
 }
 
-int load_program(const char *file_name) {
+void load_program(const char *file_name) {
     if (access(file_name, 0)) {
         printf("** The executable does not exist.\n");
-        return -1;
+        return;
     }
 
-    elf_parse(file_name);
+    struct elf_data data;
+    elf_parse(file_name, &data);
+    printf("** program '%s' loaded. entry point 0x%llx, vaddr %llx, offset 0x%llx, size 0x%llx\n", file_name, data.addr, data.addr, data.offset, data.size);
     strcpy(program, file_name);
     status = loaded;
-
-    return 0;
 }
 
-int show_help() {
+void show_help() {
 	printf("** - break {instruction-address}: add a break point\n");
 	printf("** - cont: continue execution\n");
 	printf("** - delete {break-point-id}: remove a break point\n");
@@ -130,22 +172,20 @@ int show_help() {
 	printf("** - set reg val: get a single value to a register\n");
 	printf("** - si: step into instruction\n");
 	printf("** - start: start the program and stop at the first instruction\n");
-    return -1;
 }
 
-int get_all_registers() {
+void get_all_registers() {
     struct user_regs_struct regs;
     if(ptrace(PTRACE_GETREGS, child, 0, &regs) < 0)
         print_error("PTRACE_GETREGS failed!");
-    printf("RAX %llx\tRBX %llx\tRCX %llx\tRDX %llx\n", regs.rax, regs.rbx, regs.rcx, regs.rdx);
-    printf("R8  %llx\tR9  %llx\tR10 %llx\tR11 %llx\n", regs.r8, regs.r9, regs.r10, regs.r11);
-    printf("R12 %llx\tR13 %llx\tR14 %llx\tR15 %llx\n", regs.r12, regs.r13, regs.r14, regs.r15);
-    printf("RDI %llx\tRSI %llx\tRBP %llx\tRSP %llx\n", regs.rdi, regs.rsi, regs.rbp, regs.rsp);
-    printf("RIP %llx\tFLAGS %016llx\n", regs.rip, regs.eflags);
-    return 0;
+    printf("RAX %16llx RBX %16llx RCX %16llx RDX %16llx\n", regs.rax, regs.rbx, regs.rcx, regs.rdx);
+    printf("R8  %16llx R9  %16llx R10 %16llx R11 %16llx\n", regs.r8, regs.r9, regs.r10, regs.r11);
+    printf("R12 %16llx R13 %16llx R14 %16llx R15 %16llx\n", regs.r12, regs.r13, regs.r14, regs.r15);
+    printf("RDI %16llx RSI %16llx RBP %16llx RSP %16llx\n", regs.rdi, regs.rsi, regs.rbp, regs.rsp);
+    printf("RIP %16llx FLAGS %016llx\n", regs.rip, regs.eflags);
 }
 
-int get_register(const char *reg_name) {
+void get_register(const char *reg_name) {
     unsigned long long reg_value;
     struct user_regs_struct regs;
 
@@ -203,15 +243,13 @@ int get_register(const char *reg_name) {
         reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.fs - (unsigned char *) &regs, 0);
     else if (!strcmp(reg_name, "gs"))
         reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.gs - (unsigned char *) &regs, 0);
-    else {
+    else
         ILLEGAL;
-        return -1;
-    }
+
     printf("%s = %lld (0x%llx)\n", reg_name, reg_value, reg_value);
-    return 0;
 }
 
-int kill_program() {
+void kill_program() {
     if (status = running)
         kill(child, SIGKILL);
     exit(-1);
@@ -219,24 +257,28 @@ int kill_program() {
 
 int command() {
     if (!strcmp(input[0], "q") || !strcmp(input[0], "exit"))
-        return kill_program();
+        kill_program();
     else if ((!strcmp(input[0], "g") || !strcmp(input[0], "get")) && status == running)
-        return get_register(input[1]);
+        get_register(input[1]);
     else if (!strcmp(input[0], "getregs") && status == running)
-        return get_all_registers();
+        get_all_registers();
     else if (!strcmp(input[0], "help"))
-        return show_help();
+        show_help();
     else if (!strcmp(input[0], "load") && status == non_loaded)
-        return load_program(input[1]);
+        load_program(input[1]);
     else if ((!strcmp(input[0], "r") || !strcmp(input[0], "run")) && (status == loaded || status == running))
-        return run_program();
+        run_program();
+    else if ((!strcmp(input[0], "m") || !strcmp(input[0], "vmmap")) && (status == loaded || status == running))
+        show_vmmap(program);
     else if (!strcmp(input[0], "si") && status == running)
-        return run_single();
+        run_single();
     else if (!strcmp(input[0], "start") && status == loaded)
-        return start_program(program);
-
-    ILLEGAL;
-    return -1;
+        start_program(program);
+    else {
+        ILLEGAL;
+        return -1;
+    }
+    return 0;
 }
 
 int wait_input() {
@@ -264,8 +306,7 @@ int main(int argc, char **argv) {
         load_program(argv[1]);
 
     while (1) {
-        if (wait_input())
-            continue;
+        wait_input();
         if (!WIFSTOPPED(pid_status))
             status = loaded;
     }
