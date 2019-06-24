@@ -1,0 +1,21 @@
+The following features are:
+    Marked as 'O' if they have been completed.
+    Marked as 'X' if they are unfinished.
+    Marked as '!' if they are being implementation but not completed.
+
+X - break {instruction-address}
+O - cont
+X - delete {break-point-id}
+X - disasm addr
+X - dump addr [length]
+O - exit
+O - get reg
+O - getregs
+O - help
+O - list
+O - load {path/to/a/program}
+O - run
+O - vmmap
+O - set reg val
+O - si
+O - start
