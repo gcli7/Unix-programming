@@ -211,8 +211,16 @@ int get_register(const char *reg_name) {
     return 0;
 }
 
+int kill_program() {
+    if (status = running)
+        kill(child, SIGKILL);
+    exit(-1);
+}
+
 int command() {
-    if ((!strcmp(input[0], "g") || !strcmp(input[0], "get")) && status == running)
+    if (!strcmp(input[0], "q") || !strcmp(input[0], "exit"))
+        return kill_program();
+    else if ((!strcmp(input[0], "g") || !strcmp(input[0], "get")) && status == running)
         return get_register(input[1]);
     else if (!strcmp(input[0], "getregs") && status == running)
         return get_all_registers();
