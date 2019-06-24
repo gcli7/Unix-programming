@@ -95,6 +95,78 @@ void run_single() {
         print_error("waitpid failed!");
 }
 
+void set_register(const char *reg_name, const char *reg_value) {
+    if (!reg_name || !reg_value) {
+        printf("** no register or address are given.");
+        return;
+    }
+
+    unsigned long long value;
+    struct user_regs_struct regs;
+
+    if (reg_value[0] == 'x' || reg_value[0] == 'X' || reg_value[1] == 'x' || reg_value[1] == 'X')
+        value = strtoll(reg_value, NULL, 16);
+    else
+        value = strtoll(reg_value, NULL, 10);
+
+    if (!strcmp(reg_name, "r15"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.r15 - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "r14"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.r14 - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "r13"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.r13 - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "r12"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.r12 - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "rbp"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.rbp - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "rbx"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.rbx - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "r11"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.r11 - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "r10"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.r10 - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "r9"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.r9 - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "r8"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.r8 - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "rax"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.rax - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "rcx"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.rcx - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "rdx"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.rdx - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "rsi"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.rsi - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "rdi"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.rdi - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "orig_rax"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.orig_rax - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "rip"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.rip - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "cs"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.cs - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "eflags"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.eflags - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "rsp"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.rsp - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "ss"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.ss - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "fs_base"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.fs_base - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "gs_base"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.gs_base - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "ds"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.ds - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "es"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.es - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "fs"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.fs - (unsigned char *) &regs, value);
+    else if (!strcmp(reg_name, "gs"))
+        ptrace(PTRACE_POKEUSER, child, (unsigned char *) &regs.gs - (unsigned char *) &regs, value);
+    else
+        ILLEGAL;
+}
+
 void show_vmmap(const char *file_name) {
     if (status == loaded) {
         struct elf_data data;
@@ -186,6 +258,11 @@ void get_all_registers() {
 }
 
 void get_register(const char *reg_name) {
+    if (!reg_name) {
+        printf("** no register is given.");
+        return;
+    }
+
     unsigned long long reg_value;
     struct user_regs_struct regs;
 
@@ -243,8 +320,10 @@ void get_register(const char *reg_name) {
         reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.fs - (unsigned char *) &regs, 0);
     else if (!strcmp(reg_name, "gs"))
         reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.gs - (unsigned char *) &regs, 0);
-    else
+    else {
         ILLEGAL;
+        return;
+    }
 
     printf("%s = %lld (0x%llx)\n", reg_name, reg_value, reg_value);
 }
@@ -270,6 +349,8 @@ int command() {
         run_program();
     else if ((!strcmp(input[0], "m") || !strcmp(input[0], "vmmap")) && (status == loaded || status == running))
         show_vmmap(program);
+    else if ((!strcmp(input[0], "s") || !strcmp(input[0], "set")) && status == running)
+        set_register(input[1], input[2]);
     else if (!strcmp(input[0], "si") && status == running)
         run_single();
     else if (!strcmp(input[0], "start") && status == loaded)
@@ -307,8 +388,10 @@ int main(int argc, char **argv) {
 
     while (1) {
         wait_input();
-        if (!WIFSTOPPED(pid_status))
+        if (status == running && !WIFSTOPPED(pid_status)) {
+            printf("** child process %d terminiated normally (code 0)\n", child);
             status = loaded;
+        }
     }
 
     return 0;
