@@ -70,6 +70,72 @@ int get_all_registers() {
     return 0;
 }
 
+int get_register(const char *reg_name) {
+    unsigned long long reg_value;
+    struct user_regs_struct regs;
+
+    if (!strcmp(reg_name, "r15"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.r15 - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "r14"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.r14 - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "r13"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.r13 - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "r12"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.r12 - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "rbp"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.rbp - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "rbx"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.rbx - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "r11"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.r11 - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "r10"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.r10 - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "r9"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.r9 - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "r8"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.r8 - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "rax"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.rax - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "rcx"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.rcx - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "rdx"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.rdx - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "rsi"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.rsi - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "rdi"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.rdi - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "orig_rax"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.orig_rax - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "rip"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.rip - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "cs"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.cs - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "eflags"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.eflags - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "rsp"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.rsp - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "ss"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.ss - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "fs_base"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.fs_base - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "gs_base"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.gs_base - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "ds"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.ds - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "es"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.es - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "fs"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.fs - (unsigned char *) &regs, 0);
+    else if (!strcmp(reg_name, "gs"))
+        reg_value = ptrace(PTRACE_PEEKUSER, child, (unsigned char *) &regs.gs - (unsigned char *) &regs, 0);
+    else {
+        ILLEGAL;
+        return -1;
+    }
+    printf("%s = %lld (0x%llx)\n", reg_name, reg_value, reg_value);
+    return 0;
+}
+
 int run_single() {
     if(ptrace(PTRACE_SINGLESTEP, child, 0, 0) < 0)
         print_error("PTRACE_SINGLESTEP failed!");
@@ -151,6 +217,8 @@ int command() {
         return run_program();
     else if (!strcmp(input[0], "si") && status == running)
         return run_single();
+    else if ((!strcmp(input[0], "g") || !strcmp(input[0], "get")) && status == running)
+        return get_register(input[1]);
     else if (!strcmp(input[0], "getregs") && status == running)
         return get_all_registers();
     else if (!strcmp(input[0], "help"))
