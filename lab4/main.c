@@ -334,8 +334,17 @@ void kill_program() {
     exit(-1);
 }
 
+void continue_program() {
+    if (ptrace(PTRACE_CONT, child, 0, 0) < 0)
+        print_error("PTRACE_CONT failed!");
+    if (waitpid(child, &pid_status, 0) < 0)
+        print_error("waitpid failed!");
+}
+
 int command() {
-    if (!strcmp(input[0], "q") || !strcmp(input[0], "exit"))
+    if ((!strcmp(input[0], "c") || !strcmp(input[0], "cont")) && status == running)
+        continue_program();
+    else if (!strcmp(input[0], "q") || !strcmp(input[0], "exit"))
         kill_program();
     else if ((!strcmp(input[0], "g") || !strcmp(input[0], "get")) && status == running)
         get_register(input[1]);
